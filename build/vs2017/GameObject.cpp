@@ -28,7 +28,7 @@ void GameObject::setPosition(gef::Vector4 position)
     updateTransform();
 }
 
-gef::Vector4 GameObject::getPostition()
+gef::Vector4 GameObject::getPosition()
 {
     return position;
 }

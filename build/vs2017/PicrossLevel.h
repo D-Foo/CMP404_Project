@@ -6,6 +6,7 @@
 #include "assets/png_loader.h"
 #include "graphics/image_data.h"
 #include "graphics/texture.h"
+#include <array>
 
 #pragma once
 class PicrossLevel
@@ -14,7 +15,7 @@ public:
 	PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform);
 	~PicrossLevel();
 
-	void render(gef::Renderer3D* renderer);
+	void render(gef::Renderer3D* renderer, gef::Vector4 cameraPos);
 	void setSpacing(float spacing);
 
 	void changeSelectedCube(int xDiff, int yDiff, int zDiff);

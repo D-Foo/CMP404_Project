@@ -27,16 +27,66 @@ PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform)
 	levelCenter = gef::Vector4((static_cast<float>(rowSize) * cubeSideSize) / 2.0f, (static_cast<float>(columnSize) * cubeSideSize) / 2.0f, (static_cast<float>(depthSize) * cubeSideSize) / 2.0f);
 
 	initCubes(pBuilder);
-	changeSelectedCube(2, 1, 0);
+	changeSelectedCube(0, 0, 0);
 }
 
 PicrossLevel::~PicrossLevel()
 {
 }
 
-void PicrossLevel::render(gef::Renderer3D* renderer)
+void PicrossLevel::render(gef::Renderer3D* renderer, gef::Vector4 cameraPos)
 {
-	for (int x = 0; x < rowSize; ++x)
+	int minRowShown = 0;
+	int maxRowShown = rowSize;
+
+	std::vector<std::pair<std::array<int, 3>, float>> renderOrder;	//Sorted vector from largest distance to smallest
+	
+	for (int x = minRowShown; x < maxRowShown; ++x)
+	{
+		for (int y = 0; y < columnSize; ++y)
+		{
+			for (int z = 0; z < depthSize; ++z)
+			{
+				float xDiff, yDiff, zDiff;
+
+				xDiff = cubes[x][y][z].getPosition().x() - cameraPos.x();
+				yDiff = cubes[x][y][z].getPosition().y() - cameraPos.y();
+				zDiff = cubes[x][y][z].getPosition().z() - cameraPos.z();
+
+				float distance = abs(xDiff) + abs(yDiff) + abs(zDiff);
+				//if renderOrder not empty
+				if (!renderOrder.empty())
+				{
+					//Iterate through and find a distance smaller than the current distance and insert it before it
+					for (std::vector<std::pair<std::array<int, 3>, float>>::iterator it = renderOrder.begin(); it != renderOrder.end(); ++it)
+					{
+						if (it->second < distance)
+						{
+							renderOrder.insert(it, std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
+							break;
+						}
+						else if (it == renderOrder.end() - 1)
+						{
+							renderOrder.push_back(std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
+							break;
+						}
+					}
+				}
+				else
+				{
+					renderOrder.push_back(std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
+				}
+			}
+		}
+	}
+
+	for (auto& c : renderOrder)
+	{
+		renderer->DrawMesh(cubes[c.first[0]][c.first[1]][c.first[2]]);
+	}
+
+
+	/*for (int x = minRowShown; x < maxRowShown; ++x)
 	{
 		for (int y = 0; y < columnSize; ++y)
 		{
@@ -45,7 +95,7 @@ void PicrossLevel::render(gef::Renderer3D* renderer)
 				renderer->DrawMesh(cubes[x][y][z]);
 			}
 		}
-	}
+	}*/
 }
 
 void PicrossLevel::setSpacing(float spacing)

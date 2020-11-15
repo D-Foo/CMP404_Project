@@ -11,7 +11,7 @@ public:
 	void setRotation(gef::Vector4 rotation);
 	gef::Vector4 getRotation();
 	void setPosition(gef::Vector4 position);
-	gef::Vector4 getPostition();
+	gef::Vector4 getPosition();
 private:
 	gef::Vector4 velocity;
 	gef::Vector4 position;
