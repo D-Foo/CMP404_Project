@@ -7,7 +7,8 @@ PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder)
 	depthSize = 3;
 	cubeSideSize = 25.0f;
 	levelScale = 1.0f;
-	
+	spacing = 0.0f;
+
 	cubeSize = gef::Vector4(cubeSideSize, cubeSideSize, cubeSideSize);
 
 
@@ -35,6 +36,20 @@ void PicrossLevel::render(gef::Renderer3D* renderer)
 	}
 }
 
+void PicrossLevel::setSpacing(float spacing)
+{
+	for (int x = 0; x < rowSize; ++x)
+	{
+		for (int y = 0; y < columnSize; ++y)
+		{
+			for (int z = 0; z < depthSize; ++z)
+			{
+				cubes[x][y][z].setPosition(gef::Vector4((static_cast<float>(x) * cubeSideSize) + x * spacing, (static_cast<float>(y) * cubeSideSize) + y * spacing, (static_cast<float>(z) * cubeSideSize) + z * spacing) - levelCenter);
+			}
+		}
+	}
+}
+
 void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 {
 	bool spacingEnabled = true;
@@ -49,7 +64,6 @@ void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 			{
 				//Create cube
 				PicrossCube temp;
-				float spacing = 2.5f;
 				if (!spacingEnabled)
 				{
 					spacing = 0.0f;

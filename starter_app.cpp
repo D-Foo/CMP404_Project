@@ -13,7 +13,9 @@
 #include <input/keyboard.h>
 #include <maths/math_utils.h>
 #include <graphics/renderer_3d.h>
-
+#include <graphics/ImGui/imgui.h>
+#include <graphics/ImGui/imgui_impl_dx11.h>
+#include <graphics/ImGui/imgui_impl_win32.h>
 
 StarterApp::StarterApp(gef::Platform& platform) :
 	Application(platform),
@@ -60,6 +62,7 @@ void StarterApp::Init()
 	collision = false;
 	
 	pLevel = new PicrossLevel(primitive_builder_);
+	picrossSpacing = 0.0f;
 }
 
 void StarterApp::CleanUp()
@@ -115,6 +118,7 @@ bool StarterApp::Update(float frame_time)
 	collision = collisionDetector.AABB(player_, ball2Mesh);
 	ball2Mesh->setRotation(gef::Vector4(ball2Mesh->getRotation().x() + frame_time, ball2Mesh->getRotation().y() + frame_time, ball2Mesh->getRotation().z() + frame_time));
 	//ball2Mesh->setPosition(gef::Vector4(ball2Mesh->getPostition().x(), ball2Mesh->getPostition().y() + frame_time, ball2Mesh->getPostition().z()));
+	pLevel->setSpacing(picrossSpacing);
 
 	return true;
 }
@@ -177,6 +181,23 @@ void StarterApp::DrawHUD()
 		}
 		font_->RenderText(sprite_renderer_, gef::Vector4(850.0f, 460.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_LEFT, collisionText.c_str());
 	}
+	// Start the Dear ImGui frame
+	ImGui_ImplDX11_NewFrame();
+	ImGui_ImplWin32_NewFrame();
+	ImGui::NewFrame();
+
+	//Create ImGui Windows
+	ImGui::Begin("Test");
+
+	ImGui::DragFloat("Spacing", &picrossSpacing, 0.5f, 0.0f, 10.0f, "%.2f");
+
+	ImGui::End();
+
+
+	//Assemble Together Draw Data
+	ImGui::Render();
+	//Render Draw Data
+	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
 void StarterApp::SetupLights()

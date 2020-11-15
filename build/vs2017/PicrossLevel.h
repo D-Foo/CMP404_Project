@@ -12,13 +12,14 @@ public:
 	~PicrossLevel();
 
 	void render(gef::Renderer3D* renderer);
+	void setSpacing(float spacing);
 
 private:
 	//Vars
 	float levelScale;
 	gef::Vector4 levelCenter;
 	float cubeSideSize;
-
+	float spacing;
 
 	//Cubes
 	int rowSize;	//Width

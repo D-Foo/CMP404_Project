@@ -73,7 +73,7 @@ private:
 	GameObject testCube;
 	gef::Mesh* testCubeMesh;
 	PicrossLevel* pLevel;
-
+	float picrossSpacing;
 
 	//Collision Detection
 	CollisionDetector collisionDetector;
