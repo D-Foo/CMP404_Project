@@ -58,11 +58,13 @@ void StarterApp::Init()
 
 	wall1.set_mesh(primitive_builder_->CreateBoxMesh(gef::Vector4(25.0f, 50.0f, 12.5f)));
 
+	
 
 	collision = false;
 	
-	pLevel = new PicrossLevel(primitive_builder_);
+	pLevel = new PicrossLevel(primitive_builder_, platform_);
 	picrossSpacing = 0.0f;
+	keyW = false;
 }
 
 void StarterApp::CleanUp()
@@ -94,7 +96,7 @@ void StarterApp::CleanUp()
 bool StarterApp::Update(float frame_time)
 {
 	fps_ = 1.0f / frame_time;
-
+	keyW = false;
 
 	// read input devices
 	if (input_manager_)
@@ -111,6 +113,14 @@ bool StarterApp::Update(float frame_time)
 		gef::Keyboard* keyboard = input_manager_->keyboard();
 		if (keyboard)
 		{
+			if (keyboard->IsKeyDown(keyboard->KC_W))
+			{
+				keyW = true;
+			}
+			if (keyboard->IsKeyDown(keyboard->KC_ESCAPE))
+			{
+				return false;
+			}
 		}
 	}
 
@@ -180,6 +190,11 @@ void StarterApp::DrawHUD()
 			collisionText = "Collision";
 		}
 		font_->RenderText(sprite_renderer_, gef::Vector4(850.0f, 460.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_LEFT, collisionText.c_str());
+		if(keyW)
+		{		
+			collisionText = "W";
+			font_->RenderText(sprite_renderer_, gef::Vector4(850.0f, 410.0f, -0.9f), 1.0f, 0xffffffff, gef::TJ_LEFT, collisionText.c_str());
+		}
 	}
 	// Start the Dear ImGui frame
 	ImGui_ImplDX11_NewFrame();

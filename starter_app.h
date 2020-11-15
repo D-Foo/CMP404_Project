@@ -78,6 +78,7 @@ private:
 	//Collision Detection
 	CollisionDetector collisionDetector;
 	bool collision;
+	bool keyW;
 };
 
 #endif // _STARTER_APP_H

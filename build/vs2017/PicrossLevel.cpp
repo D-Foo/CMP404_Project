@@ -1,6 +1,6 @@
 #include "PicrossLevel.h"
 
-PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder)
+PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform)
 {
 	rowSize = 3;
 	columnSize = 3;
@@ -10,12 +10,24 @@ PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder)
 	spacing = 0.0f;
 
 	cubeSize = gef::Vector4(cubeSideSize, cubeSideSize, cubeSideSize);
+	currentlySelectedCube[0] = { 0 };
+	currentlySelectedCube[1] = { 0 };
+	currentlySelectedCube[2] = { 0 };
 
 
+	//Create redMaterial
+	redMat = new gef::Material*[6]();
+	for (int i = 0; i < 6; i++)
+	{
+		redMat[i] = new gef::Material();
+		redMat[i]->set_colour(0xff0000ff);
+	}
+	
 
 	levelCenter = gef::Vector4((static_cast<float>(rowSize) * cubeSideSize) / 2.0f, (static_cast<float>(columnSize) * cubeSideSize) / 2.0f, (static_cast<float>(depthSize) * cubeSideSize) / 2.0f);
 
 	initCubes(pBuilder);
+	changeSelectedCube(2, 1, 0);
 }
 
 PicrossLevel::~PicrossLevel()
@@ -50,8 +62,40 @@ void PicrossLevel::setSpacing(float spacing)
 	}
 }
 
+//TODO: Will have to handle missing rows/cubes
+void PicrossLevel::changeSelectedCube(int xDiff, int yDiff, int zDiff)
+{
+	//Change cube selection
+	currentlySelectedCube[0] += xDiff;
+	currentlySelectedCube[1] += yDiff;
+	currentlySelectedCube[2] += zDiff;
+
+
+	//Clamp
+	float maxCubeSides[3] = { rowSize, columnSize, depthSize };
+	for (int i = 0; i < 3; ++i)
+	{
+		if (currentlySelectedCube[i] < 0)
+		{
+			currentlySelectedCube[i] = 0;
+		}
+		else if (currentlySelectedCube[i] > maxCubeSides[i])
+		{
+			currentlySelectedCube[i] = maxCubeSides[i];
+		}
+	}
+
+	//Change cube material
+	
+
+	cubes[currentlySelectedCube[0]][currentlySelectedCube[0]][currentlySelectedCube[0]].set_mesh(redCubeMesh);
+}
+
 void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 {
+
+	redCubeMesh = pBuilder->CreateBoxMesh(gef::Vector4(cubeSideSize / 2.0f, cubeSideSize / 2.0f, cubeSideSize / 2.0f), gef::Vector4(0.0f, 0.0f, 0.0f), redMat);
+
 	bool spacingEnabled = true;
 
 	for (int x = 0; x < rowSize; ++x)
@@ -71,7 +115,9 @@ void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 
 				//Set postiion and mesh
 				temp.setPosition(gef::Vector4((static_cast<float>(x) * cubeSideSize) + x * spacing, (static_cast<float>(y) * cubeSideSize) + y * spacing, (static_cast<float>(z) * cubeSideSize) + z * spacing) - levelCenter);
-				temp.set_mesh(pBuilder->CreateBoxMesh(gef::Vector4(cubeSideSize / 2.0f, cubeSideSize / 2.0f, cubeSideSize / 2.0f)));
+				defaultCubeMesh = pBuilder->CreateBoxMesh(gef::Vector4(cubeSideSize / 2.0f, cubeSideSize / 2.0f, cubeSideSize / 2.0f));
+
+				temp.set_mesh(defaultCubeMesh);
 
 				//Store
 				cubes[x][y].push_back(temp);
