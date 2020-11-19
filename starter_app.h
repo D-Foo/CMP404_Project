@@ -81,6 +81,7 @@ private:
 	bool collision;
 	bool keyW;
 	gef::Vector2 touchPosition;
+	gef::Vector4 rayDirValues;
 };
 
 #endif // _STARTER_APP_H

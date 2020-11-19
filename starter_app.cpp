@@ -96,13 +96,13 @@ void StarterApp::CleanUp()
 
 bool StarterApp::Update(float frame_time)
 {
-	//Test line
-	gef::Matrix44 projection_matrix;
-	gef::Matrix44 view_matrix;
+	////Test line
+	//gef::Matrix44 projection_matrix;
+	//gef::Matrix44 view_matrix;
 
-	projection_matrix = platform_.PerspectiveProjectionFov(camera_fov_, (float)platform_.width() / (float)platform_.height(), near_plane_, far_plane_);
-	view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
-	pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), gef::Vector2(platform_.width() / 2.0f, platform_.height() / 2.0f), projection_matrix, view_matrix, camera_eye_);
+	//projection_matrix = platform_.PerspectiveProjectionFov(camera_fov_, (float)platform_.width() / (float)platform_.height(), near_plane_, far_plane_);
+	//view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
+	//pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), gef::Vector2(platform_.width() / 2.0f, platform_.height() / 2.0f), projection_matrix, view_matrix, camera_eye_);
 
 
 	fps_ = 1.0f / frame_time;
@@ -127,6 +127,10 @@ bool StarterApp::Update(float frame_time)
 			{
 				keyW = true;
 			}
+			if (keyboard->IsKeyDown(keyboard->KC_E))
+			{
+				pLevel->resetCubeColours();
+			}
 			if (keyboard->IsKeyDown(keyboard->KC_ESCAPE))
 			{
 				return false;
@@ -147,10 +151,9 @@ bool StarterApp::Update(float frame_time)
 
 				projection_matrix = platform_.PerspectiveProjectionFov(camera_fov_, (float)platform_.width() / (float)platform_.height(), near_plane_, far_plane_);
 				view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
-				
-				
+			
 
-				pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, camera_eye_);
+				pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, camera_eye_, rayDirValues);
 			}
 		}
 	}
@@ -236,6 +239,8 @@ void StarterApp::DrawHUD()
 	ImGui::Begin("Test");
 
 	ImGui::DragFloat("Spacing", &picrossSpacing, 0.5f, 0.0f, 10.0f, "%.2f");
+	
+	ImGui::Text("RayDirection: (%f, %f, %f, %F)", rayDirValues.x(), rayDirValues.y(), rayDirValues.z(), rayDirValues.w(), "%.2f");
 
 	ImGui::End();
 

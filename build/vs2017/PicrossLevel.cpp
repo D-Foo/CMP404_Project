@@ -100,7 +100,18 @@ void PicrossLevel::changeSelectedCube(int xDiff, int yDiff, int zDiff)
 	cubes[currentlySelectedCube[0]][currentlySelectedCube[0]][currentlySelectedCube[0]].set_mesh(redCubeMesh);
 }
 
-void PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4 cameraPos)
+gef::Vector4 vec4Mat44Mult(gef::Vector4 v, gef::Matrix44 m)
+{
+	gef::Vector4 ret;
+	ret.set_x((v.x() * m.GetRow(0).x()) + (v.y() * m.GetRow(0).y()) + (v.z() * m.GetRow(0).z()) + (v.w() * m.GetRow(0).w()));
+	ret.set_y((v.x() * m.GetRow(1).x()) + (v.y() * m.GetRow(1).y()) + (v.z() * m.GetRow(1).z()) + (v.w() * m.GetRow(1).w()));
+	ret.set_z((v.x() * m.GetRow(2).x()) + (v.y() * m.GetRow(2).y()) + (v.z() * m.GetRow(2).z()) + (v.w() * m.GetRow(2).w()));
+	ret.set_w((v.x() * m.GetRow(3).x()) + (v.y() * m.GetRow(3).y()) + (v.z() * m.GetRow(3).z()) + (v.w() * m.GetRow(3).w()));
+	return ret;
+}
+
+
+void PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4 cameraPos, gef::Vector4& rayDirValues)
 {
 	//Reference
 	//https://www.rastertek.com/dx11tut47.html
@@ -114,14 +125,16 @@ void PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touch
 
 	//Convert from touch pos to device space -1.0f, 1.0f
 	gef::Vector4 rayPos;
-	rayPos.set_x((2 * touchPos.x) / screenSize.x - 1.0f);
+	rayPos.set_x(((2 * touchPos.x) / screenSize.x) - 1.0f);
 	rayPos.set_y(((2 * touchPos.y) / screenSize.y - 1.0f) * -1.0f);
-	rayPos.set_z(0.0f);
+	rayPos.set_z(-1.0f);
 	rayPos.set_w(1.0f);
 
 	//Adjust using projection matrix
 	rayPos.set_x(rayPos.x() / projectionMatrix.GetRow(0).x());
 	rayPos.set_y(rayPos.y() / projectionMatrix.GetRow(1).y());
+	gef::Matrix44 inverseProjectionMatrix = projectionMatrix;
+	inverseProjectionMatrix.Inverse(inverseProjectionMatrix);
 
 	//Create Inverse View Matrix
 	gef::Matrix44 inverseViewMatrix = viewMatrix;
@@ -134,45 +147,74 @@ void PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touch
 	rayDirection.set_z((rayPos.x() * inverseViewMatrix.GetRow(0).z()) + (rayPos.y() * inverseViewMatrix.GetRow(1).z()) + inverseViewMatrix.GetRow(2).z());
 	rayDirection.set_w(1.0f);
 
+	rayDirection.set_x(-rayDirection.x());
+	rayDirection.set_y(-rayDirection.y());
+
+	rayDirValues = rayDirection;
+
 	//Ray to Cube Check
 	//Cubes sorted by closest to camera
-	for (auto& c : renderOrder)
+	for (size_t i = renderOrder.size() - 1; i > 0 ; --i) 
 	{
+		PicrossCube* cube = &cubes[renderOrder[i].first[0]][renderOrder[i].first[1]][renderOrder[i].first[2]];
+
 		//Get inverse worldMatrix
-		gef::Matrix44 worldMatrix = cubes[c.first[0]][c.first[1]][c.first[2]].transform();
+		gef::Matrix44 worldMatrix;// = cube->transform();
 		worldMatrix.SetIdentity();
 		gef::Matrix44 inverseWorldMatrix = worldMatrix;
 		inverseWorldMatrix.Inverse(inverseWorldMatrix);
 
 		//Transform ray origin and direction from view space to world space
-		gef::Vector4 rayOrigin = cameraPos;// .Transform(inverseWorldMatrix);
-		//rayDirection = rayDirection.TransformW(inverseWorldMatrix);
+		gef::Vector4 rayOrigin = cameraPos;
+		rayOrigin = rayOrigin.Transform(inverseWorldMatrix);
+		rayDirection = rayDirection.TransformW(inverseWorldMatrix);
 		rayDirection.Normalise();
 		
 		//Check for ray + cube intersection
-
 		gef::Vector4 bottomLeft;
-		bottomLeft.set_x(cubes[c.first[0]][c.first[1]][c.first[2]].mesh()->aabb().min_vtx().x() + cubes[c.first[0]][c.first[1]][c.first[2]].transform().GetRow(3).x());
-		bottomLeft.set_y(cubes[c.first[0]][c.first[1]][c.first[2]].mesh()->aabb().min_vtx().y() + cubes[c.first[0]][c.first[1]][c.first[2]].transform().GetRow(3).y());
-		bottomLeft.set_z(cubes[c.first[0]][c.first[1]][c.first[2]].mesh()->aabb().min_vtx().z() + cubes[c.first[0]][c.first[1]][c.first[2]].transform().GetRow(3).z());
+		bottomLeft.set_x(cube->transform().GetRow(3).x() + cube->mesh()->aabb().min_vtx().x());
+		bottomLeft.set_y(cube->transform().GetRow(3).y() + cube->mesh()->aabb().min_vtx().y());
+		bottomLeft.set_z(cube->transform().GetRow(3).z() + cube->mesh()->aabb().min_vtx().z());	
+		/*bottomLeft.set_x(cube->mesh()->aabb().min_vtx().x() - cube->transform().GetRow(3).x());
+		bottomLeft.set_y(cube->mesh()->aabb().min_vtx().y() - cube->transform().GetRow(3).y());
+		bottomLeft.set_z(cube->mesh()->aabb().min_vtx().z() - cube->transform().GetRow(3).z());*/
+
 		bottomLeft.set_w(1.0f);
 
 		gef::Vector4 topRight;
-		topRight.set_x(cubes[c.first[0]][c.first[1]][c.first[2]].mesh()->aabb().max_vtx().x() + cubes[c.first[0]][c.first[1]][c.first[2]].transform().GetRow(3).x());
-		topRight.set_y(cubes[c.first[0]][c.first[1]][c.first[2]].mesh()->aabb().max_vtx().y() + cubes[c.first[0]][c.first[1]][c.first[2]].transform().GetRow(3).y());
-		topRight.set_z(cubes[c.first[0]][c.first[1]][c.first[2]].mesh()->aabb().max_vtx().z() + cubes[c.first[0]][c.first[1]][c.first[2]].transform().GetRow(3).z());
+		topRight.set_x(cube->transform().GetRow(3).x() + cube->mesh()->aabb().max_vtx().x());
+		topRight.set_y(cube->transform().GetRow(3).y() + cube->mesh()->aabb().max_vtx().y());
+		topRight.set_z(cube->transform().GetRow(3).z() + cube->mesh()->aabb().max_vtx().z());
+	/*	topRight.set_x(cube->mesh()->aabb().max_vtx().x() - cube->transform().GetRow(3).x());
+		topRight.set_y(cube->mesh()->aabb().max_vtx().y() - cube->transform().GetRow(3).y());
+		topRight.set_z(cube->mesh()->aabb().max_vtx().z() - cube->transform().GetRow(3).z());*/
 		topRight.set_w(1.0f);
 
 		bool intersection = CollisionDetector::rayCube2(rayDirection, rayOrigin, bottomLeft, topRight);
 		if (intersection)
 		{
-			cubes[c.first[0]][c.first[1]][c.first[2]].set_mesh(redCubeMesh);
+			cube->set_mesh(redCubeMesh);
 			break;
 		}
 	}
 
 	
 }
+
+void PicrossLevel::resetCubeColours()
+{
+	for (auto& x : cubes)
+	{
+		for (auto& y : x)
+		{
+			for (auto& z : y)
+			{
+				z.set_mesh(defaultCubeMesh);
+			}
+		}
+	}
+}
+
 
 void PicrossLevel::updateRenderOrder(gef::Vector4 cameraPos)
 {

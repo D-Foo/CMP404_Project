@@ -24,8 +24,8 @@ public:
 	void setSpacing(float spacing, gef::Vector4 cameraPos);
 
 	void changeSelectedCube(int xDiff, int yDiff, int zDiff);
-	void selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4 cameraPos);
-
+	void selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4 cameraPos, gef::Vector4& rayDirValues);
+	void resetCubeColours();
 
 private:
 	
