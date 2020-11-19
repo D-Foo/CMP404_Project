@@ -13,6 +13,7 @@
 #include "CollisionDetector.h"
 #include "GameObject.h"
 #include "PicrossLevel.h"
+#include "input/touch_input_manager.h"
 
 // FRAMEWORK FORWARD DECLARATIONS
 namespace gef
@@ -79,6 +80,7 @@ private:
 	CollisionDetector collisionDetector;
 	bool collision;
 	bool keyW;
+	gef::Vector2 touchPosition;
 };
 
 #endif // _STARTER_APP_H

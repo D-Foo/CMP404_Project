@@ -63,7 +63,8 @@ void StarterApp::Init()
 	collision = false;
 	
 	pLevel = new PicrossLevel(primitive_builder_, platform_);
-	picrossSpacing = 0.0f;
+	picrossSpacing = 20.0f;
+	pLevel->setSpacing(picrossSpacing, camera_eye_);
 	keyW = false;
 }
 
@@ -95,6 +96,15 @@ void StarterApp::CleanUp()
 
 bool StarterApp::Update(float frame_time)
 {
+	//Test line
+	gef::Matrix44 projection_matrix;
+	gef::Matrix44 view_matrix;
+
+	projection_matrix = platform_.PerspectiveProjectionFov(camera_fov_, (float)platform_.width() / (float)platform_.height(), near_plane_, far_plane_);
+	view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
+	pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), gef::Vector2(platform_.width() / 2.0f, platform_.height() / 2.0f), projection_matrix, view_matrix, camera_eye_);
+
+
 	fps_ = 1.0f / frame_time;
 	keyW = false;
 
@@ -122,13 +132,34 @@ bool StarterApp::Update(float frame_time)
 				return false;
 			}
 		}
+
+		//Mouse/touch input
+
+		gef::TouchInputManager* touchManager = input_manager_->touch_manager();
+		if (touchManager)
+		{
+			if (!touchManager->touches(0).empty())
+			{
+				keyW = true;
+				touchPosition = touchManager->touches(0).front().position;
+				gef::Matrix44 projection_matrix;
+				gef::Matrix44 view_matrix;
+
+				projection_matrix = platform_.PerspectiveProjectionFov(camera_fov_, (float)platform_.width() / (float)platform_.height(), near_plane_, far_plane_);
+				view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
+				
+				
+
+				pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, camera_eye_);
+			}
+		}
 	}
 
 	//collision = collisionDetector.sphereToSphere(player_, ball2Mesh);
 	collision = collisionDetector.AABB(player_, ball2Mesh);
 	ball2Mesh->setRotation(gef::Vector4(ball2Mesh->getRotation().x() + frame_time, ball2Mesh->getRotation().y() + frame_time, ball2Mesh->getRotation().z() + frame_time));
 	//ball2Mesh->setPosition(gef::Vector4(ball2Mesh->getPostition().x(), ball2Mesh->getPostition().y() + frame_time, ball2Mesh->getPostition().z()));
-	pLevel->setSpacing(picrossSpacing);
+	//pLevel->setSpacing(picrossSpacing);
 
 	return true;
 }
@@ -153,7 +184,7 @@ void StarterApp::Render()
 	//renderer_3d_->DrawMesh(*ball2Mesh);
 
 	//renderer_3d_->DrawMesh(static_cast<gef::MeshInstance>(wall1));
-	pLevel->render(renderer_3d_, camera_eye_);
+	pLevel->render(renderer_3d_);
 
 	//renderer_3d_->DrawMesh(testCube);
 
