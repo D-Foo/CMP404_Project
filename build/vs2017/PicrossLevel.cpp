@@ -27,7 +27,7 @@ PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform)
 	levelCenter = gef::Vector4((static_cast<float>(rowSize) * cubeSideSize) / 2.0f, (static_cast<float>(columnSize) * cubeSideSize) / 2.0f, (static_cast<float>(depthSize) * cubeSideSize) / 2.0f);
 
 	initCubes(pBuilder);
-	//changeSelectedCube(0, 0, 0);
+	//changeSelectedCube(0, 0, 0);	
 }
 
 PicrossLevel::~PicrossLevel()
@@ -97,7 +97,7 @@ void PicrossLevel::changeSelectedCube(int xDiff, int yDiff, int zDiff)
 	//Change cube material
 	
 
-	cubes[currentlySelectedCube[0]][currentlySelectedCube[0]][currentlySelectedCube[0]].set_mesh(redCubeMesh);
+	cubes[currentlySelectedCube[0]][currentlySelectedCube[1]][currentlySelectedCube[2]].set_mesh(redCubeMesh);
 }
 
 gef::Vector4 vec4Mat44Mult(gef::Vector4 v, gef::Matrix44 m)
@@ -215,17 +215,42 @@ void PicrossLevel::resetCubeColours()
 	}
 }
 
-
 void PicrossLevel::updateRenderOrder(gef::Vector4 cameraPos)
 {
-	int minRowShown = 0;
-	int maxRowShown = rowSize;
+	//Setup
+	renderOrder.clear();
+	int maxSizes[3] = { rowSize, columnSize, depthSize };						//The max sizes of each axis
+	std::pair<int, int> minMaxMembersShown[3] = { std::pair<int, int>(0, 0) };	//Where to start and stop rendering each axis
 
-	for (int x = minRowShown; x < maxRowShown; ++x)
+	//Check for pushing and adjust what cubes are rendered
+	for (int i = 0; i < 3; ++i)
 	{
-		for (int y = 0; y < columnSize; ++y)
+		if (pushVars[i].pushed)
 		{
-			for (int z = 0; z < depthSize; ++z)
+			if (pushVars[i].reversedPushDir)
+			{
+				minMaxMembersShown[i].first = 0 + pushVars[i].pushAmount;
+				minMaxMembersShown[i].second = maxSizes[i];
+			}
+			else
+			{
+				minMaxMembersShown[i].first = 0;
+				minMaxMembersShown[i].second = maxSizes[i] - pushVars[i].pushAmount;
+			}
+		}
+		else
+		{
+			minMaxMembersShown[i].first = 0;
+			minMaxMembersShown[i].second = maxSizes[i];
+		}
+	}
+
+	//Create render order
+	for (int x = minMaxMembersShown[0].first; x < minMaxMembersShown[0].second; ++x)
+	{
+		for (int y = minMaxMembersShown[1].first; y < minMaxMembersShown[1].second; ++y)
+		{
+			for (int z = minMaxMembersShown[2].first; z < minMaxMembersShown[2].second; ++z)
 			{
 				float xDiff, yDiff, zDiff;
 

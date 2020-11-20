@@ -58,10 +58,7 @@ gef::Quaternion GameObject::createQuaternion()
 
 void GameObject::updateTransform()
 {
-    gef::Matrix44 transform;
-	gef::Matrix44 translation;
-	gef::Matrix44 rotation;
-
+    gef::Matrix44 transform, translation, rotation;
     transform.SetIdentity(); translation.SetIdentity(); rotation.SetIdentity();
 
 	translation.SetTranslation(position);

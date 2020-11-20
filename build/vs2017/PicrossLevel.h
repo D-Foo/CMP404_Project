@@ -26,6 +26,7 @@ public:
 	void changeSelectedCube(int xDiff, int yDiff, int zDiff);
 	void selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4 cameraPos, gef::Vector4& rayDirValues);
 	void resetCubeColours();
+	void pushIntoLevel(bool xAxis, bool yAxis, bool zAxis, bool in, bool out, int amount = 1);	//Todo: Come up with better parameters
 
 private:
 	
@@ -53,6 +54,14 @@ private:
 	gef::Material** redMat;
 	gef::Texture* tempTex;
 
-	
+	//Pushing Vars
+	struct PushVars
+	{
+		PushVars() { pushed = false; pushAmount = 0; reversedPushDir = false; }
+		bool pushed;
+		int pushAmount;
+		bool reversedPushDir;
+	};
+	PushVars pushVars[3]; //[x][y][z]
 };
 
