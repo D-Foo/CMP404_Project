@@ -225,24 +225,23 @@ void PicrossLevel::resetCubeColours()
 	}
 }
 
-void PicrossLevel::pushIntoLevel(bool xAxis, bool yAxis, bool zAxis, bool in, bool out, bool reverseDirection, int amount)	//Todo replcae with (int axis, bool reverseDirection, int amount)
+void PicrossLevel::pushIntoLevel(int axis, bool reverseDirection, int amount)	//Todo replcae with (int axis, bool reverseDirection, int amount)
 {
 	//Make sure valid function call
-	if ((!xAxis && !yAxis && !zAxis) || amount == 0 || (xAxis && yAxis) || (xAxis && zAxis) || (yAxis && zAxis) || (in && out))
+	
+	if (axis < 0 || axis > 2)
 	{
 		return;
 	}
-	int index = -1;
-	if (xAxis) { index = 0; }
-	else if (yAxis) { index = 1; }
-	else if (zAxis) { index = 2; }
+
+	int index = axis;
 
 	PushVars* pVars = &pushVars[index];
 	//Check if already pushed
 	if (pVars->pushed)
 	{
 		//Update push
-		pVars->pushAmount += amount;
+		pVars->pushAmount = amount;
 		//If push amount == 0 
 		if (pVars->pushAmount == 0)
 		{

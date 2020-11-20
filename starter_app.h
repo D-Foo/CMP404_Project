@@ -82,6 +82,7 @@ private:
 	bool keyW;
 	gef::Vector2 touchPosition;
 	gef::Vector4 rayDirValues;
+	std::pair<int, bool> pushingControls[3];
 };
 
 #endif // _STARTER_APP_H

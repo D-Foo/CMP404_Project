@@ -69,8 +69,12 @@ void StarterApp::Init()
 
 	pLevel->setSpacing(picrossSpacing);
 	keyW = false;
-	pLevel->pushIntoLevel(false, true, false, false, false, true, 2);
-	
+	//pLevel->pushIntoLevel(false, true, false, false, false, true, 2);
+	for (int i = 0; i < 3; ++i)
+	{
+		pushingControls[i] = std::pair<int, bool>(0, false);
+	}
+
 }
 
 void StarterApp::CleanUp()
@@ -247,9 +251,22 @@ void StarterApp::DrawHUD()
 	
 	ImGui::Text("RayDirection: (%f, %f, %f, %F)", rayDirValues.x(), rayDirValues.y(), rayDirValues.z(), rayDirValues.w(), "%.2f");
 
+	std::string axesLabels[3] = { "X", "Y", "Z" };
 
-
-
+	for (int i = 0; i < 3; ++i)
+	{
+		std::string label = "";
+		label.append(axesLabels[i]);
+		label.append(" Axis");
+		if (ImGui::InputInt(label.c_str(), &pushingControls[i].first))
+		{
+			pLevel->pushIntoLevel(i, pushingControls[i].second, pushingControls[i].first);
+		}
+		if (ImGui::Button("Reverse Direction"))
+		{
+			pushingControls[i].second = !pushingControls[i].second;
+		}
+	}
 	ImGui::End();
 
 

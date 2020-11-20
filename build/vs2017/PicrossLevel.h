@@ -28,7 +28,7 @@ public:
 	void changeSelectedCube(int xDiff, int yDiff, int zDiff);
 	void selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4& rayDirValues);
 	void resetCubeColours();
-	void pushIntoLevel(bool xAxis, bool yAxis, bool zAxis, bool in, bool out, bool reverseDirection, int amount = 1);	//Todo: Come up with better parameters
+	void pushIntoLevel(int axis, bool reverseDirection, int amount = 1);	//Todo: Come up with better parameters
 
 private:
 	
