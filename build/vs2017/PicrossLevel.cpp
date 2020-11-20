@@ -5,6 +5,10 @@ PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform)
 	rowSize = 3;
 	columnSize = 3;
 	depthSize = 3;
+	maxSizes[0] = rowSize;
+	maxSizes[1] = columnSize;
+	maxSizes[2] = depthSize;
+
 	cubeSideSize = 25.0f;
 	levelScale = 1.0f;
 	spacing = 0.0f;
@@ -14,6 +18,7 @@ PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform)
 	currentlySelectedCube[1] = { 0 };
 	currentlySelectedCube[2] = { 0 };
 
+	cameraPos = nullptr;
 
 	//Create redMaterial
 	redMat = new gef::Material*[6]();
@@ -56,7 +61,7 @@ void PicrossLevel::render(gef::Renderer3D* renderer)
 	}*/
 }
 
-void PicrossLevel::setSpacing(float spacing, gef::Vector4 cameraPos)
+void PicrossLevel::setSpacing(float spacing)
 {
 	for (int x = 0; x < rowSize; ++x)
 	{
@@ -68,7 +73,12 @@ void PicrossLevel::setSpacing(float spacing, gef::Vector4 cameraPos)
 			}
 		}
 	}
-	updateRenderOrder(cameraPos);
+	updateRenderOrder();
+}
+
+void PicrossLevel::setCameraPosPtr(gef::Vector4* cameraPos)
+{
+	this->cameraPos = cameraPos;
 }
 
 //TODO: Will have to handle missing rows/cubes
@@ -111,7 +121,7 @@ gef::Vector4 vec4Mat44Mult(gef::Vector4 v, gef::Matrix44 m)
 }
 
 
-void PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4 cameraPos, gef::Vector4& rayDirValues)
+void PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4& rayDirValues)
 {
 	//Reference
 	//https://www.rastertek.com/dx11tut47.html
@@ -165,7 +175,7 @@ void PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touch
 		inverseWorldMatrix.Inverse(inverseWorldMatrix);
 
 		//Transform ray origin and direction from view space to world space
-		gef::Vector4 rayOrigin = cameraPos;
+		gef::Vector4 rayOrigin = *cameraPos;
 		rayOrigin = rayOrigin.Transform(inverseWorldMatrix);
 		rayDirection = rayDirection.TransformW(inverseWorldMatrix);
 		rayDirection.Normalise();
@@ -215,11 +225,62 @@ void PicrossLevel::resetCubeColours()
 	}
 }
 
-void PicrossLevel::updateRenderOrder(gef::Vector4 cameraPos)
+void PicrossLevel::pushIntoLevel(bool xAxis, bool yAxis, bool zAxis, bool in, bool out, bool reverseDirection, int amount)	//Todo replcae with (int axis, bool reverseDirection, int amount)
+{
+	//Make sure valid function call
+	if ((!xAxis && !yAxis && !zAxis) || amount == 0 || (xAxis && yAxis) || (xAxis && zAxis) || (yAxis && zAxis) || (in && out))
+	{
+		return;
+	}
+	int index = -1;
+	if (xAxis) { index = 0; }
+	else if (yAxis) { index = 1; }
+	else if (zAxis) { index = 2; }
+
+	PushVars* pVars = &pushVars[index];
+	//Check if already pushed
+	if (pVars->pushed)
+	{
+		//Update push
+		pVars->pushAmount += amount;
+		//If push amount == 0 
+		if (pVars->pushAmount == 0)
+		{
+			//Toggle pushed
+			pVars->pushed = false;
+			pVars->reversedPushDir = false;
+		}
+		
+	}	
+	//If new push
+	else
+	{
+		//Set pushed
+		pVars->pushed = true;
+		pVars->pushAmount = amount;
+		pVars->reversedPushDir = reverseDirection;
+	}
+
+	if (pVars->pushed)
+	{
+		//Clamp pushed to between 0 and maxSizes
+		if (pVars->pushAmount < 0)
+		{
+			pVars->pushAmount = 0;
+		}
+		else if (pVars->pushAmount >= maxSizes[index])
+		{
+			pVars->pushAmount = maxSizes[index] - 1;
+		}
+	}
+	updateRenderOrder();
+}
+
+void PicrossLevel::updateRenderOrder()
 {
 	//Setup
 	renderOrder.clear();
-	int maxSizes[3] = { rowSize, columnSize, depthSize };						//The max sizes of each axis
+	
 	std::pair<int, int> minMaxMembersShown[3] = { std::pair<int, int>(0, 0) };	//Where to start and stop rendering each axis
 
 	//Check for pushing and adjust what cubes are rendered
@@ -254,9 +315,9 @@ void PicrossLevel::updateRenderOrder(gef::Vector4 cameraPos)
 			{
 				float xDiff, yDiff, zDiff;
 
-				xDiff = cubes[x][y][z].getPosition().x() - cameraPos.x();
-				yDiff = cubes[x][y][z].getPosition().y() - cameraPos.y();
-				zDiff = cubes[x][y][z].getPosition().z() - cameraPos.z();
+				xDiff = cubes[x][y][z].getPosition().x() - cameraPos->x();
+				yDiff = cubes[x][y][z].getPosition().y() - cameraPos->y();
+				zDiff = cubes[x][y][z].getPosition().z() - cameraPos->z();
 
 				float distance = abs(xDiff) + abs(yDiff) + abs(zDiff);
 				//if renderOrder not empty
@@ -295,6 +356,7 @@ void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 
 	for (int x = 0; x < rowSize; ++x)
 	{
+		//Try emplace front
 		cubes.push_back(std::vector<std::vector<PicrossCube>>());
 		for (int y = 0; y < columnSize; ++y)
 		{

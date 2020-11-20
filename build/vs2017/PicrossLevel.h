@@ -12,6 +12,7 @@
 #include "maths/matrix44.h"
 #include "graphics/mesh.h"
 #include "CollisionDetector.h"
+#include <deque>
 
 #pragma once
 class PicrossLevel
@@ -21,17 +22,18 @@ public:
 	~PicrossLevel();
 
 	void render(gef::Renderer3D* renderer);
-	void setSpacing(float spacing, gef::Vector4 cameraPos);
+	void setSpacing(float spacing);
+	void setCameraPosPtr(gef::Vector4* cameraPos);
 
 	void changeSelectedCube(int xDiff, int yDiff, int zDiff);
-	void selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4 cameraPos, gef::Vector4& rayDirValues);
+	void selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4& rayDirValues);
 	void resetCubeColours();
-	void pushIntoLevel(bool xAxis, bool yAxis, bool zAxis, bool in, bool out, int amount = 1);	//Todo: Come up with better parameters
+	void pushIntoLevel(bool xAxis, bool yAxis, bool zAxis, bool in, bool out, bool reverseDirection, int amount = 1);	//Todo: Come up with better parameters
 
 private:
 	
 	float currentlySelectedCube[3];
-	void updateRenderOrder(gef::Vector4 cameraPos);
+	void updateRenderOrder();
 
 	//Vars
 	float levelScale;
@@ -43,6 +45,7 @@ private:
 	int rowSize;	//Width
 	int columnSize;	//Height
 	int depthSize;	//Depth
+	int maxSizes[3];//The max sizes of each axis
 	gef::Vector4 cubeSize;
 
 	void initCubes(PrimitiveBuilder* pBuilder);
@@ -63,5 +66,6 @@ private:
 		bool reversedPushDir;
 	};
 	PushVars pushVars[3]; //[x][y][z]
+	gef::Vector4* cameraPos;
 };
 

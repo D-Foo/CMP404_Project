@@ -63,9 +63,14 @@ void StarterApp::Init()
 	collision = false;
 	
 	pLevel = new PicrossLevel(primitive_builder_, platform_);
+	pLevel->setCameraPosPtr(&camera_eye_);
 	picrossSpacing = 20.0f;
-	pLevel->setSpacing(picrossSpacing, camera_eye_);
+
+
+	pLevel->setSpacing(picrossSpacing);
 	keyW = false;
+	pLevel->pushIntoLevel(false, true, false, false, false, true, 2);
+	
 }
 
 void StarterApp::CleanUp()
@@ -153,7 +158,7 @@ bool StarterApp::Update(float frame_time)
 				view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
 			
 
-				pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, camera_eye_, rayDirValues);
+				pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, rayDirValues);
 			}
 		}
 	}
@@ -241,6 +246,9 @@ void StarterApp::DrawHUD()
 	ImGui::DragFloat("Spacing", &picrossSpacing, 0.5f, 0.0f, 10.0f, "%.2f");
 	
 	ImGui::Text("RayDirection: (%f, %f, %f, %F)", rayDirValues.x(), rayDirValues.y(), rayDirValues.z(), rayDirValues.w(), "%.2f");
+
+
+
 
 	ImGui::End();
 
