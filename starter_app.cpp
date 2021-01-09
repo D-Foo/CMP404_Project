@@ -77,6 +77,10 @@ void StarterApp::Init()
 
 	destroyButtonDown = false;
 	destroyKey = gef::Keyboard::KC_R;
+	cameraDist = 350.0f;
+	cameraYOffset = 5.0f;
+	cameraXZOffset = 5.0f;
+	cameraRotAmount = 180.0f;
 }
 
 void StarterApp::CleanUp()
@@ -148,6 +152,29 @@ bool StarterApp::Update(float frame_time)
 			if (keyboard->IsKeyDown(destroyKey))
 			{
 				destroyButtonDown = true;
+			}
+			if (keyboard->IsKeyPressed(keyboard->KC_LEFT) || keyboard->IsKeyPressed(keyboard->KC_RIGHT))
+			{
+				if (keyboard->IsKeyPressed(keyboard->KC_LEFT))
+				{
+					cameraRotAmount -= 90.0f;
+					if (cameraRotAmount < 0.0f)
+					{
+						cameraRotAmount += 360.0f;
+					}
+					//Rotate Cam Left 90
+				}
+				else
+				{
+					cameraRotAmount += 90.0f;
+					if (cameraRotAmount > 360.0f)
+					{
+						cameraRotAmount -= 360.0f;
+					}
+					//Rotate Cam Right 90
+				}
+				camera_eye_ = gef::Vector4((sin(gef::DegToRad(cameraRotAmount)) * cameraDist), cameraYOffset, (cos(gef::DegToRad(cameraRotAmount)) * cameraDist ));
+				pLevel->updateRenderOrder();
 			}
 		}
 

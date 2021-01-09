@@ -32,6 +32,7 @@ public:
 	void resetCubeColours();
 	void pushIntoLevel(int axis, bool reverseDirection, int amount = 1);	//Todo: Come up with better parameters
 	bool destroyCube(Picross::CubeCoords coords);
+	void updateRenderOrder();
 
 private:
 	
@@ -39,7 +40,7 @@ private:
 	bool RayCubeIntersect(const gef::Vector4& start_point, gef::Vector4 direction, int& cubeID);
 
 	float currentlySelectedCube[3];
-	void updateRenderOrder();
+	
 
 	//Vars
 	float levelScale;

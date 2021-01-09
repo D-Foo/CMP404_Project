@@ -86,6 +86,11 @@ private:
 	std::pair<int, bool> pushingControls[3];
 	gef::Keyboard::KeyCode destroyKey;
 	bool destroyButtonDown;
+
+	float cameraDist;
+	float cameraYOffset;
+	float cameraXZOffset;
+	float cameraRotAmount;
 };
 
 #endif // _STARTER_APP_H
