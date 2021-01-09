@@ -10,7 +10,7 @@
 #include <maths/vector2.h>
 #include <input/input_manager.h>
 #include <input/sony_controller_input_manager.h>
-#include <input/keyboard.h>
+
 #include <maths/math_utils.h>
 #include <graphics/renderer_3d.h>
 #include <graphics/ImGui/imgui.h>
@@ -64,7 +64,7 @@ void StarterApp::Init()
 	
 	pLevel = new PicrossLevel(primitive_builder_, platform_);
 	pLevel->setCameraPosPtr(&camera_eye_);
-	picrossSpacing = 20.0f;
+	picrossSpacing = 5.0f;
 
 
 	pLevel->setSpacing(picrossSpacing);
@@ -74,6 +74,9 @@ void StarterApp::Init()
 	{
 		pushingControls[i] = std::pair<int, bool>(0, false);
 	}
+
+	destroyButtonDown = false;
+	destroyKey = gef::Keyboard::KC_R;
 
 }
 
@@ -116,6 +119,7 @@ bool StarterApp::Update(float frame_time)
 
 	fps_ = 1.0f / frame_time;
 	keyW = false;
+	destroyButtonDown = false;
 
 	// read input devices
 	if (input_manager_)
@@ -144,6 +148,10 @@ bool StarterApp::Update(float frame_time)
 			{
 				return false;
 			}
+			if (keyboard->IsKeyDown(destroyKey))
+			{
+				destroyButtonDown = true;
+			}
 		}
 
 		//Mouse/touch input
@@ -161,8 +169,17 @@ bool StarterApp::Update(float frame_time)
 				projection_matrix = platform_.PerspectiveProjectionFov(camera_fov_, (float)platform_.width() / (float)platform_.height(), near_plane_, far_plane_);
 				view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
 			
-
-				pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, rayDirValues);
+				if (destroyButtonDown)
+				{
+					Picross::CubeCoords cubeCoords;
+					pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, rayDirValues, false, cubeCoords);
+					pLevel->destroyCube(cubeCoords);
+				}
+				else
+				{
+					Picross::CubeCoords cubeCoords;
+					pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, rayDirValues, true, cubeCoords);
+				}
 			}
 		}
 	}

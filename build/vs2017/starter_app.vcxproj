@@ -243,6 +243,7 @@
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="PicrossCube.h" />
     <ClInclude Include="PicrossLevel.h" />
+    <ClInclude Include="PicrossStructs.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

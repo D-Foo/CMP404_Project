@@ -110,5 +110,8 @@
     <ClInclude Include="..\..\..\gef_abertay\graphics\ImGui\imstb_truetype.h">
       <Filter>ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="PicrossStructs.hpp">
+      <Filter>Picross</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

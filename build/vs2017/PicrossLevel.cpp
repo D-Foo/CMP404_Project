@@ -33,6 +33,8 @@ PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform)
 
 	initCubes(pBuilder);
 	//changeSelectedCube(0, 0, 0);	
+	lives = 5;
+	gameOver = false;
 }
 
 PicrossLevel::~PicrossLevel()
@@ -45,7 +47,10 @@ void PicrossLevel::render(gef::Renderer3D* renderer)
 
 	for (auto& c : renderOrder)
 	{
-		renderer->DrawMesh(cubes[c.first[0]][c.first[1]][c.first[2]]);
+		if (cubes[c.first[0]][c.first[1]][c.first[2]] != nullptr)
+		{
+			renderer->DrawMesh(*cubes[c.first[0]][c.first[1]][c.first[2]]);
+		}
 	}
 
 
@@ -69,7 +74,10 @@ void PicrossLevel::setSpacing(float spacing)
 		{
 			for (int z = 0; z < depthSize; ++z)
 			{
-				cubes[x][y][z].setPosition(gef::Vector4((static_cast<float>(x) * cubeSideSize) + x * spacing, (static_cast<float>(y) * cubeSideSize) + y * spacing, (static_cast<float>(z) * cubeSideSize) + z * spacing) - levelCenter);
+				if (cubes[x][y][z] != nullptr)
+				{
+					cubes[x][y][z]->setPosition(gef::Vector4((static_cast<float>(x) * cubeSideSize) + x * spacing, (static_cast<float>(y) * cubeSideSize) + y * spacing, (static_cast<float>(z) * cubeSideSize) + z * spacing) - levelCenter);
+				}
 			}
 		}
 	}
@@ -107,7 +115,7 @@ void PicrossLevel::changeSelectedCube(int xDiff, int yDiff, int zDiff)
 	//Change cube material
 	
 
-	cubes[currentlySelectedCube[0]][currentlySelectedCube[1]][currentlySelectedCube[2]].set_mesh(redCubeMesh);
+	cubes[currentlySelectedCube[0]][currentlySelectedCube[1]][currentlySelectedCube[2]]->set_mesh(redCubeMesh);
 }
 
 gef::Vector4 vec4Mat44Mult(gef::Vector4 v, gef::Matrix44 m)
@@ -121,7 +129,7 @@ gef::Vector4 vec4Mat44Mult(gef::Vector4 v, gef::Matrix44 m)
 }
 
 
-void PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4& rayDirValues)
+bool PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4& rayDirValues, bool mark, Picross::CubeCoords& coords)
 {
 	//Reference
 	//https://www.rastertek.com/dx11tut47.html
@@ -157,6 +165,8 @@ void PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touch
 	rayDirection.set_z((rayPos.x() * inverseViewMatrix.GetRow(0).z()) + (rayPos.y() * inverseViewMatrix.GetRow(1).z()) + inverseViewMatrix.GetRow(2).z());
 	rayDirection.set_w(1.0f);
 
+	rayDirection.Normalise();
+
 	rayDirection.set_x(-rayDirection.x());
 	rayDirection.set_y(-rayDirection.y());
 
@@ -166,48 +176,56 @@ void PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touch
 	//Cubes sorted by closest to camera
 	for (size_t i = renderOrder.size() - 1; i > 0 ; --i) 
 	{
-		PicrossCube* cube = &cubes[renderOrder[i].first[0]][renderOrder[i].first[1]][renderOrder[i].first[2]];
+		PicrossCube* cube = cubes[renderOrder[i].first[0]][renderOrder[i].first[1]][renderOrder[i].first[2]];
 
-		//Get inverse worldMatrix
-		gef::Matrix44 worldMatrix;// = cube->transform();
-		worldMatrix.SetIdentity();
-		gef::Matrix44 inverseWorldMatrix = worldMatrix;
-		inverseWorldMatrix.Inverse(inverseWorldMatrix);
-
-		//Transform ray origin and direction from view space to world space
-		gef::Vector4 rayOrigin = *cameraPos;
-		rayOrigin = rayOrigin.Transform(inverseWorldMatrix);
-		rayDirection = rayDirection.TransformW(inverseWorldMatrix);
-		rayDirection.Normalise();
-		
-		//Check for ray + cube intersection
-		gef::Vector4 bottomLeft;
-		bottomLeft.set_x(cube->transform().GetRow(3).x() + cube->mesh()->aabb().min_vtx().x());
-		bottomLeft.set_y(cube->transform().GetRow(3).y() + cube->mesh()->aabb().min_vtx().y());
-		bottomLeft.set_z(cube->transform().GetRow(3).z() + cube->mesh()->aabb().min_vtx().z());	
-		/*bottomLeft.set_x(cube->mesh()->aabb().min_vtx().x() - cube->transform().GetRow(3).x());
-		bottomLeft.set_y(cube->mesh()->aabb().min_vtx().y() - cube->transform().GetRow(3).y());
-		bottomLeft.set_z(cube->mesh()->aabb().min_vtx().z() - cube->transform().GetRow(3).z());*/
-
-		bottomLeft.set_w(1.0f);
-
-		gef::Vector4 topRight;
-		topRight.set_x(cube->transform().GetRow(3).x() + cube->mesh()->aabb().max_vtx().x());
-		topRight.set_y(cube->transform().GetRow(3).y() + cube->mesh()->aabb().max_vtx().y());
-		topRight.set_z(cube->transform().GetRow(3).z() + cube->mesh()->aabb().max_vtx().z());
-	/*	topRight.set_x(cube->mesh()->aabb().max_vtx().x() - cube->transform().GetRow(3).x());
-		topRight.set_y(cube->mesh()->aabb().max_vtx().y() - cube->transform().GetRow(3).y());
-		topRight.set_z(cube->mesh()->aabb().max_vtx().z() - cube->transform().GetRow(3).z());*/
-		topRight.set_w(1.0f);
-
-		bool intersection = CollisionDetector::rayCube2(rayDirection, rayOrigin, bottomLeft, topRight);
-		if (intersection)
+		if (cube != nullptr)
 		{
-			cube->set_mesh(redCubeMesh);
-			break;
+			//Get inverse worldMatrix
+			gef::Matrix44 worldMatrix;// = cube->transform();
+			worldMatrix.SetIdentity();
+			gef::Matrix44 inverseWorldMatrix = worldMatrix;
+			inverseWorldMatrix.Inverse(inverseWorldMatrix);
+
+			//Transform ray origin and direction from view space to world space
+			gef::Vector4 rayOrigin = *cameraPos;
+			rayOrigin = rayOrigin.Transform(inverseWorldMatrix);
+			rayDirection = rayDirection.TransformW(inverseWorldMatrix);
+			rayDirection.Normalise();
+
+			//Check for ray + cube intersection
+			gef::Vector4 bottomLeft;
+			bottomLeft.set_x(cube->transform().GetRow(3).x() + cube->mesh()->aabb().min_vtx().x());
+			bottomLeft.set_y(cube->transform().GetRow(3).y() + cube->mesh()->aabb().min_vtx().y());
+			bottomLeft.set_z(cube->transform().GetRow(3).z() + cube->mesh()->aabb().min_vtx().z());
+			/*bottomLeft.set_x(cube->mesh()->aabb().min_vtx().x() - cube->transform().GetRow(3).x());
+			bottomLeft.set_y(cube->mesh()->aabb().min_vtx().y() - cube->transform().GetRow(3).y());
+			bottomLeft.set_z(cube->mesh()->aabb().min_vtx().z() - cube->transform().GetRow(3).z());*/
+
+			bottomLeft.set_w(1.0f);
+
+			gef::Vector4 topRight;
+			topRight.set_x(cube->transform().GetRow(3).x() + cube->mesh()->aabb().max_vtx().x());
+			topRight.set_y(cube->transform().GetRow(3).y() + cube->mesh()->aabb().max_vtx().y());
+			topRight.set_z(cube->transform().GetRow(3).z() + cube->mesh()->aabb().max_vtx().z());
+			/*	topRight.set_x(cube->mesh()->aabb().max_vtx().x() - cube->transform().GetRow(3).x());
+				topRight.set_y(cube->mesh()->aabb().max_vtx().y() - cube->transform().GetRow(3).y());
+				topRight.set_z(cube->mesh()->aabb().max_vtx().z() - cube->transform().GetRow(3).z());*/
+			topRight.set_w(1.0f);
+
+			bool intersection = CollisionDetector::rayCube2(rayDirection, rayOrigin, bottomLeft, topRight);
+			if (intersection)
+			{
+				if (mark)
+				{
+					cube->set_mesh(redCubeMesh);
+				}
+				coords = cube->getCoords();
+				return true;
+			}
 		}
 	}
 
+	return false;
 	
 }
 
@@ -219,7 +237,10 @@ void PicrossLevel::resetCubeColours()
 		{
 			for (auto& z : y)
 			{
-				z.set_mesh(defaultCubeMesh);
+				if (z != nullptr)
+				{
+					z->set_mesh(defaultCubeMesh);
+				}
 			}
 		}
 	}
@@ -275,6 +296,64 @@ void PicrossLevel::pushIntoLevel(int axis, bool reverseDirection, int amount)	//
 	updateRenderOrder();
 }
 
+bool PicrossLevel::destroyCube(Picross::CubeCoords coords)
+{
+	int x = coords.x;
+	int y = coords.y;
+	int z = coords.z;
+
+	if (cubes[x][y][z] != nullptr)
+	{
+		//Check if cube is part of the final shape of the level
+		if (cubes[x][y][z]->getFinalObject())
+		{
+			//Lose a life
+			--lives;
+			if (lives == 0)
+			{
+				gameOver = true;
+				return false;
+			}
+		}
+		else
+		{
+			//Delete cube
+			//cubes[x][y].erase(cubes[x][y].begin() + z);
+			delete(cubes[x][y][z]);
+			cubes[x][y][z] = nullptr;
+
+			bool levelClear = true;
+
+			//Check if only final objects left
+			for (auto& v1 : cubes)
+			{
+				for (auto& v2 : v1)
+				{
+					for (auto& c : v2)
+					{
+						if (c != nullptr)
+						{
+
+
+							if (!c->getFinalObject())
+							{
+								levelClear = false;
+								break;
+							}
+						}
+					}
+				}
+			}
+			if (levelClear)
+			{
+				//TODO: return enum?
+			}
+		}
+	}
+	return true;
+	
+}
+
 void PicrossLevel::updateRenderOrder()
 {
 	//Setup
@@ -312,34 +391,37 @@ void PicrossLevel::updateRenderOrder()
 		{
 			for (int z = minMaxMembersShown[2].first; z < minMaxMembersShown[2].second; ++z)
 			{
-				float xDiff, yDiff, zDiff;
-
-				xDiff = cubes[x][y][z].getPosition().x() - cameraPos->x();
-				yDiff = cubes[x][y][z].getPosition().y() - cameraPos->y();
-				zDiff = cubes[x][y][z].getPosition().z() - cameraPos->z();
-
-				float distance = abs(xDiff) + abs(yDiff) + abs(zDiff);
-				//if renderOrder not empty
-				if (!renderOrder.empty())
+				if (cubes[x][y][z] != nullptr)
 				{
-					//Iterate through and find a distance smaller than the current distance and insert it before it
-					for (std::vector<std::pair<std::array<int, 3>, float>>::iterator it = renderOrder.begin(); it != renderOrder.end(); ++it)
+					float xDiff, yDiff, zDiff;
+
+					xDiff = cubes[x][y][z]->getPosition().x() - cameraPos->x();
+					yDiff = cubes[x][y][z]->getPosition().y() - cameraPos->y();
+					zDiff = cubes[x][y][z]->getPosition().z() - cameraPos->z();
+
+					float distance = abs(xDiff) + abs(yDiff) + abs(zDiff);
+					//if renderOrder not empty
+					if (!renderOrder.empty())
 					{
-						if (it->second < distance)
+						//Iterate through and find a distance smaller than the current distance and insert it before it
+						for (std::vector<std::pair<std::array<int, 3>, float>>::iterator it = renderOrder.begin(); it != renderOrder.end(); ++it)
 						{
-							renderOrder.insert(it, std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
-							break;
-						}
-						else if (it == renderOrder.end() - 1)
-						{
-							renderOrder.push_back(std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
-							break;
+							if (it->second < distance)
+							{
+								renderOrder.insert(it, std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
+								break;
+							}
+							else if (it == renderOrder.end() - 1)
+							{
+								renderOrder.push_back(std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
+								break;
+							}
 						}
 					}
-				}
-				else
-				{
-					renderOrder.push_back(std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
+					else
+					{
+						renderOrder.push_back(std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
+					}
 				}
 			}
 		}
@@ -356,24 +438,24 @@ void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 	for (int x = 0; x < rowSize; ++x)
 	{
 		//Try emplace front
-		cubes.push_back(std::vector<std::vector<PicrossCube>>());
+		cubes.push_back(std::vector<std::vector<PicrossCube*>>());
 		for (int y = 0; y < columnSize; ++y)
 		{
-			cubes[x].push_back(std::vector<PicrossCube>());
+			cubes[x].push_back(std::vector<PicrossCube*>());
 			for (int z = 0; z < depthSize; ++z)
 			{
 				//Create cube
-				PicrossCube temp;
+				PicrossCube* temp = new PicrossCube(Picross::CubeCoords(x, y, z));
 				if (!spacingEnabled)
 				{
 					spacing = 0.0f;
 				}
 
 				//Set postiion and mesh
-				temp.setPosition(gef::Vector4((static_cast<float>(x) * cubeSideSize) + x * spacing, (static_cast<float>(y) * cubeSideSize) + y * spacing, (static_cast<float>(z) * cubeSideSize) + z * spacing) - levelCenter);
+				temp->setPosition(gef::Vector4((static_cast<float>(x) * cubeSideSize) + x * spacing, (static_cast<float>(y) * cubeSideSize) + y * spacing, (static_cast<float>(z) * cubeSideSize) + z * spacing) - levelCenter);
 				defaultCubeMesh = pBuilder->CreateBoxMesh(gef::Vector4(cubeSideSize / 2.0f, cubeSideSize / 2.0f, cubeSideSize / 2.0f));
 
-				temp.set_mesh(defaultCubeMesh);
+				temp->set_mesh(defaultCubeMesh);
 
 				//Store
 				cubes[x][y].push_back(temp);

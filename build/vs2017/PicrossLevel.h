@@ -13,6 +13,7 @@
 #include "graphics/mesh.h"
 #include "CollisionDetector.h"
 #include <deque>
+#include "PicrossStructs.hpp"
 
 #pragma once
 class PicrossLevel
@@ -26,9 +27,10 @@ public:
 	void setCameraPosPtr(gef::Vector4* cameraPos);
 
 	void changeSelectedCube(int xDiff, int yDiff, int zDiff);
-	void selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4& rayDirValues);
+	bool selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4& rayDirValues, bool mark, Picross::CubeCoords& coords);
 	void resetCubeColours();
 	void pushIntoLevel(int axis, bool reverseDirection, int amount = 1);	//Todo: Come up with better parameters
+	bool destroyCube(Picross::CubeCoords coords);
 
 private:
 	
@@ -40,6 +42,9 @@ private:
 	gef::Vector4 levelCenter;
 	float cubeSideSize;
 	float spacing;
+	int lives;
+	bool gameOver;
+
 
 	//Cubes
 	int rowSize;	//Width
@@ -50,7 +55,7 @@ private:
 
 	void initCubes(PrimitiveBuilder* pBuilder);
 
-	std::vector<std::vector<std::vector<PicrossCube>>> cubes;	//3D container of cubes. Access with XYZ
+	std::vector<std::vector<std::vector<PicrossCube*>>> cubes;	//3D container of cubes. Access with XYZ, nullptr if cube was erased
 	std::vector<std::pair<std::array<int, 3>, float>> renderOrder;	//Sorted vector of cubeIndexes by largest cube distance to camera to smallest 
 	gef::Mesh* defaultCubeMesh;
 	gef::Mesh* redCubeMesh;

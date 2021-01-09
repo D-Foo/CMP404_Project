@@ -14,6 +14,7 @@
 #include "GameObject.h"
 #include "PicrossLevel.h"
 #include "input/touch_input_manager.h"
+#include <input/keyboard.h>
 
 // FRAMEWORK FORWARD DECLARATIONS
 namespace gef
@@ -83,6 +84,8 @@ private:
 	gef::Vector2 touchPosition;
 	gef::Vector4 rayDirValues;
 	std::pair<int, bool> pushingControls[3];
+	gef::Keyboard::KeyCode destroyKey;
+	bool destroyButtonDown;
 };
 
 #endif // _STARTER_APP_H
