@@ -19,7 +19,7 @@
 class PicrossLevel
 {
 public:
-	PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform);
+	PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform, std::vector<std::vector<std::vector<bool>>> shape);
 	~PicrossLevel();
 
 	void render(gef::Renderer3D* renderer);
@@ -72,5 +72,6 @@ private:
 	};
 	PushVars pushVars[3]; //[x][y][z]
 	gef::Vector4* cameraPos;
+	std::vector<std::vector<std::vector<bool>>> shape;
 };
 

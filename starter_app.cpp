@@ -62,7 +62,7 @@ void StarterApp::Init()
 
 	collision = false;
 	
-	pLevel = new PicrossLevel(primitive_builder_, platform_);
+	pLevel = new PicrossLevel(primitive_builder_, platform_, Picross::getLayout1());
 	pLevel->setCameraPosPtr(&camera_eye_);
 	picrossSpacing = 5.0f;
 
@@ -77,7 +77,6 @@ void StarterApp::Init()
 
 	destroyButtonDown = false;
 	destroyKey = gef::Keyboard::KC_R;
-
 }
 
 void StarterApp::CleanUp()

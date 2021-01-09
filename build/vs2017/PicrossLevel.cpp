@@ -1,10 +1,11 @@
 #include "PicrossLevel.h"
 
-PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform)
+PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform, std::vector<std::vector<std::vector<bool>>> shape)
 {
-	rowSize = 3;
-	columnSize = 3;
-	depthSize = 3;
+	this->shape = shape;
+	rowSize = this->shape.size();
+	columnSize = this->shape[0].size();
+	depthSize = this->shape[0][0].size();
 	maxSizes[0] = rowSize;
 	maxSizes[1] = columnSize;
 	maxSizes[2] = depthSize;
@@ -43,8 +44,6 @@ PicrossLevel::~PicrossLevel()
 
 void PicrossLevel::render(gef::Renderer3D* renderer)
 {
-	
-
 	for (auto& c : renderOrder)
 	{
 		if (cubes[c.first[0]][c.first[1]][c.first[2]] != nullptr)
@@ -52,7 +51,6 @@ void PicrossLevel::render(gef::Renderer3D* renderer)
 			renderer->DrawMesh(*cubes[c.first[0]][c.first[1]][c.first[2]]);
 		}
 	}
-
 
 	/*for (int x = minRowShown; x < maxRowShown; ++x)
 	{
@@ -81,6 +79,7 @@ void PicrossLevel::setSpacing(float spacing)
 			}
 		}
 	}
+
 	updateRenderOrder();
 }
 
@@ -97,7 +96,6 @@ void PicrossLevel::changeSelectedCube(int xDiff, int yDiff, int zDiff)
 	currentlySelectedCube[1] += yDiff;
 	currentlySelectedCube[2] += zDiff;
 
-
 	//Clamp
 	float maxCubeSides[3] = { rowSize, columnSize, depthSize };
 	for (int i = 0; i < 3; ++i)
@@ -113,8 +111,6 @@ void PicrossLevel::changeSelectedCube(int xDiff, int yDiff, int zDiff)
 	}
 
 	//Change cube material
-	
-
 	cubes[currentlySelectedCube[0]][currentlySelectedCube[1]][currentlySelectedCube[2]]->set_mesh(redCubeMesh);
 }
 
@@ -459,6 +455,7 @@ void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 
 				//Store
 				cubes[x][y].push_back(temp);
+				cubes[x][y][z]->setFinalObject(shape[x][y][z]);
 			}
 		}
 	}
