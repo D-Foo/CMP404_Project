@@ -114,8 +114,6 @@ bool StarterApp::Update(float frame_time)
 	//projection_matrix = platform_.PerspectiveProjectionFov(camera_fov_, (float)platform_.width() / (float)platform_.height(), near_plane_, far_plane_);
 	//view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
 	//pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), gef::Vector2(platform_.width() / 2.0f, platform_.height() / 2.0f), projection_matrix, view_matrix, camera_eye_);
-
-
 	fps_ = 1.0f / frame_time;
 	keyW = false;
 	destroyButtonDown = false;
@@ -171,13 +169,13 @@ bool StarterApp::Update(float frame_time)
 				if (destroyButtonDown)
 				{
 					Picross::CubeCoords cubeCoords;
-					pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, rayDirValues, false, cubeCoords);
+					pLevel->selectCubeByTouch2(gef::Vector2(platform_.width(), platform_.height()), touchPosition, renderer_3d_->projection_matrix(), renderer_3d_->view_matrix(), rayDirValues, false, cubeCoords);
 					pLevel->destroyCube(cubeCoords);
 				}
 				else
 				{
 					Picross::CubeCoords cubeCoords;
-					pLevel->selectCubeByTouch(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, rayDirValues, true, cubeCoords);
+					pLevel->selectCubeByTouch2(gef::Vector2(platform_.width(), platform_.height()), touchPosition, projection_matrix, view_matrix, rayDirValues, true, cubeCoords);
 				}
 			}
 		}

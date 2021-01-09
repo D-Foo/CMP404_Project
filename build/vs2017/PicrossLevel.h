@@ -28,12 +28,16 @@ public:
 
 	void changeSelectedCube(int xDiff, int yDiff, int zDiff);
 	bool selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4& rayDirValues, bool mark, Picross::CubeCoords& coords);
+	bool selectCubeByTouch2(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4& rayDirValues, bool mark, Picross::CubeCoords& coords, float ndczmin = 0.0f);
 	void resetCubeColours();
 	void pushIntoLevel(int axis, bool reverseDirection, int amount = 1);	//Todo: Come up with better parameters
 	bool destroyCube(Picross::CubeCoords coords);
 
 private:
 	
+	void GetScreenPosRay(const gef::Vector2& screen_position, const gef::Matrix44& projection, const gef::Matrix44& view, gef::Vector4& start_point, gef::Vector4& direction, float screen_width, float screen_height, float ndc_z_min);
+	bool RayCubeIntersect(const gef::Vector4& start_point, gef::Vector4 direction, int& cubeID);
+
 	float currentlySelectedCube[3];
 	void updateRenderOrder();
 

@@ -225,6 +225,14 @@ bool PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touch
 	
 }
 
+bool PicrossLevel::selectCubeByTouch2(gef::Vector2 screenSize, gef::Vector2 touchPos, gef::Matrix44 projectionMatrix, gef::Matrix44 viewMatrix, gef::Vector4& rayDirValues, bool mark, Picross::CubeCoords& coords, float ndczmin)
+{
+	gef::Vector4 startPoint, direction;
+	GetScreenPosRay(touchPos, projectionMatrix, viewMatrix, startPoint, direction, screenSize.x, screenSize.y, ndczmin);
+	int cubeID = 0;
+	return RayCubeIntersect(startPoint, direction, cubeID);
+}
+
 void PicrossLevel::resetCubeColours()
 {
 	for (auto& x : cubes)
@@ -348,6 +356,89 @@ bool PicrossLevel::destroyCube(Picross::CubeCoords coords)
 	}
 	return true;
 	
+}
+
+void PicrossLevel::GetScreenPosRay(const gef::Vector2& screen_position, const gef::Matrix44& projection, const gef::Matrix44& view, gef::Vector4& start_point, gef::Vector4& direction, float screen_width, float screen_height, float ndc_z_min)
+{
+	gef::Vector2 ndc;
+
+	float hw = screen_width * 0.5f;
+	float hh = screen_height * 0.5f;
+
+	ndc.x = (static_cast<float>(screen_position.x) - hw) / hw;
+	ndc.y = (hh - static_cast<float>(screen_position.y)) / hh;
+
+	gef::Matrix44 projectionInverse;
+	projectionInverse.Inverse(view * projection);
+
+	gef::Vector4 nearPoint, farPoint;
+
+	nearPoint = gef::Vector4(ndc.x, ndc.y, ndc_z_min, 1.0f).TransformW(projectionInverse);
+	farPoint = gef::Vector4(ndc.x, ndc.y, 1.0f, 1.0f).TransformW(projectionInverse);
+
+	nearPoint /= nearPoint.w();
+	farPoint /= farPoint.w();
+
+	start_point = gef::Vector4(nearPoint.x(), nearPoint.y(), nearPoint.z());
+	direction = farPoint - nearPoint;
+	direction.Normalise();
+}
+
+bool PicrossLevel::RayCubeIntersect(const gef::Vector4& start_point, gef::Vector4 rayDirection, int& cubeID)
+{
+	bool mark = true;
+	for (size_t i = renderOrder.size() - 1; i > 0; --i)
+	{
+		PicrossCube* cube = cubes[renderOrder[i].first[0]][renderOrder[i].first[1]][renderOrder[i].first[2]];
+
+		if (cube != nullptr)
+		{
+			//Get inverse worldMatrix
+			gef::Matrix44 worldMatrix;// = cube->transform();
+			worldMatrix.SetIdentity();
+			gef::Matrix44 inverseWorldMatrix = worldMatrix;
+			inverseWorldMatrix.Inverse(inverseWorldMatrix);
+
+			//Transform ray origin and direction from view space to world space
+			gef::Vector4 rayOrigin = *cameraPos;
+			rayOrigin = rayOrigin.Transform(inverseWorldMatrix);
+			rayDirection = rayDirection.TransformW(inverseWorldMatrix);
+			rayDirection.Normalise();
+
+			//Check for ray + cube intersection
+			gef::Vector4 bottomLeft;
+			bottomLeft.set_x(cube->transform().GetRow(3).x() + cube->mesh()->aabb().min_vtx().x());
+			bottomLeft.set_y(cube->transform().GetRow(3).y() + cube->mesh()->aabb().min_vtx().y());
+			bottomLeft.set_z(cube->transform().GetRow(3).z() + cube->mesh()->aabb().min_vtx().z());
+			/*bottomLeft.set_x(cube->mesh()->aabb().min_vtx().x() - cube->transform().GetRow(3).x());
+			bottomLeft.set_y(cube->mesh()->aabb().min_vtx().y() - cube->transform().GetRow(3).y());
+			bottomLeft.set_z(cube->mesh()->aabb().min_vtx().z() - cube->transform().GetRow(3).z());*/
+
+			bottomLeft.set_w(1.0f);
+
+			gef::Vector4 topRight;
+			topRight.set_x(cube->transform().GetRow(3).x() + cube->mesh()->aabb().max_vtx().x());
+			topRight.set_y(cube->transform().GetRow(3).y() + cube->mesh()->aabb().max_vtx().y());
+			topRight.set_z(cube->transform().GetRow(3).z() + cube->mesh()->aabb().max_vtx().z());
+			/*	topRight.set_x(cube->mesh()->aabb().max_vtx().x() - cube->transform().GetRow(3).x());
+				topRight.set_y(cube->mesh()->aabb().max_vtx().y() - cube->transform().GetRow(3).y());
+				topRight.set_z(cube->mesh()->aabb().max_vtx().z() - cube->transform().GetRow(3).z());*/
+			topRight.set_w(1.0f);
+
+			bool intersection = CollisionDetector::rayCube2(rayDirection, rayOrigin, bottomLeft, topRight);
+			if (intersection)
+			{
+				if (mark)
+				{
+					cube->set_mesh(redCubeMesh);
+				}
+				Picross::CubeCoords coords = cube->getCoords();
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 void PicrossLevel::updateRenderOrder()
