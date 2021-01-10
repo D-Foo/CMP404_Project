@@ -81,6 +81,12 @@ void StarterApp::Init()
 	cameraYOffset = 5.0f;
 	cameraXZOffset = 5.0f;
 	cameraRotAmount = 180.0f;
+
+	for (int i = 0; i < numNumbers; ++i)
+	{
+		numberScenes[i].first = nullptr;
+		numberScenes[i].second = nullptr;
+	}
 }
 
 void StarterApp::CleanUp()
@@ -155,9 +161,10 @@ bool StarterApp::Update(float frame_time)
 			}
 			if (keyboard->IsKeyPressed(keyboard->KC_LEFT) || keyboard->IsKeyPressed(keyboard->KC_RIGHT))
 			{
+				float cameraRotChange = 90.0f;
 				if (keyboard->IsKeyPressed(keyboard->KC_LEFT))
 				{
-					cameraRotAmount -= 90.0f;
+					cameraRotAmount -= cameraRotChange;
 					if (cameraRotAmount < 0.0f)
 					{
 						cameraRotAmount += 360.0f;
@@ -166,7 +173,7 @@ bool StarterApp::Update(float frame_time)
 				}
 				else
 				{
-					cameraRotAmount += 90.0f;
+					cameraRotAmount += cameraRotChange;
 					if (cameraRotAmount > 360.0f)
 					{
 						cameraRotAmount -= 360.0f;
@@ -356,6 +363,20 @@ void StarterApp::loadScenes()
 	scene2->CreateMaterials(platform_);
 
 	scene2Mesh = GetFirstMesh(scene2);
+
+	//Number Scenes
+	for (int i = 0; i < numNumbers; ++i)
+	{
+		numberScenes[i].first = new gef::Scene();
+		std::string numFilepath = "number";
+		numFilepath.append(std::to_string(i + 1));
+		numFilepath.append(".scn");
+		numberScenes[i].first->ReadSceneFromFile(platform_, numFilepath.c_str());
+
+		numberScenes[i].first->CreateMaterials(platform_);
+
+		numberScenes[i].second = GetFirstMesh(numberScenes[i].first);
+	}
 }
 
 gef::Mesh * StarterApp::GetFirstMesh(gef::Scene * scene)

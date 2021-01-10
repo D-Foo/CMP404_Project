@@ -81,16 +81,23 @@ private:
 	CollisionDetector collisionDetector;
 	bool collision;
 	bool keyW;
+	
+	//Input
 	gef::Vector2 touchPosition;
 	gef::Vector4 rayDirValues;
 	std::pair<int, bool> pushingControls[3];
 	gef::Keyboard::KeyCode destroyKey;
 	bool destroyButtonDown;
 
+	//Camera
 	float cameraDist;
 	float cameraYOffset;
 	float cameraXZOffset;
 	float cameraRotAmount;
+
+	//Numbers
+	static constexpr int numNumbers = 4;
+	std::pair<gef::Scene*, gef::Mesh*> numberScenes[numNumbers];
 };
 
 #endif // _STARTER_APP_H
