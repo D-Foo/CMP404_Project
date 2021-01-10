@@ -97,7 +97,7 @@ private:
 
 	//Numbers
 	static constexpr int numNumbers = 4;
-	std::pair<gef::Scene*, gef::Mesh*> numberScenes[numNumbers];
+	std::pair<gef::Scene*, gef::MeshInstance*> numberScenes[numNumbers];
 };
 
 #endif // _STARTER_APP_H

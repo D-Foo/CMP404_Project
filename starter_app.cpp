@@ -35,6 +35,8 @@ void StarterApp::Init()
 	SetupCamera();
 	SetupLights();
 
+	
+
 	loadScenes();
 
 	gef::Sphere new_bounds(gef::Vector4(0.0f, 0.0f, 0.0f), 50.5f);
@@ -82,11 +84,7 @@ void StarterApp::Init()
 	cameraXZOffset = 5.0f;
 	cameraRotAmount = 180.0f;
 
-	for (int i = 0; i < numNumbers; ++i)
-	{
-		numberScenes[i].first = nullptr;
-		numberScenes[i].second = nullptr;
-	}
+
 }
 
 void StarterApp::CleanUp()
@@ -244,7 +242,14 @@ void StarterApp::Render()
 	//renderer_3d_->DrawMesh(*ball2Mesh);
 
 	//renderer_3d_->DrawMesh(static_cast<gef::MeshInstance>(wall1));
-	pLevel->render(renderer_3d_);
+	//pLevel->render(renderer_3d_);
+
+	for (int i = 0; i < numNumbers; ++i)
+	{
+		renderer_3d_->DrawMesh(*numberScenes[i].second);
+	}
+
+	//renderer_3d_->DrawMesh(*temp);
 
 	//renderer_3d_->DrawMesh(testCube);
 
@@ -365,17 +370,33 @@ void StarterApp::loadScenes()
 	scene2Mesh = GetFirstMesh(scene2);
 
 	//Number Scenes
+	gef::Matrix44 finalTransform = gef::Matrix44::kIdentity;
+	gef::Matrix44 rotMatrix = gef::Matrix44::kIdentity;
+	gef::Matrix44 scaleMatrix = gef::Matrix44::kIdentity;
+	gef::Matrix44 transformMatrix = gef::Matrix44::kIdentity;
+	float scaleF = 10.0f;
+	float rotF = 90.0f;
+	rotMatrix.RotationZ(gef::DegToRad(rotF));
+	scaleMatrix.Scale(gef::Vector4(scaleF, scaleF, scaleF, 1.0f));
+	transformMatrix.SetTranslation(gef::Vector4(100.0f, 100.0f, 0.0f));
+	finalTransform = rotMatrix * scaleMatrix * transformMatrix;
+
 	for (int i = 0; i < numNumbers; ++i)
 	{
+		numberScenes[i].first = nullptr;
+		numberScenes[i].second = nullptr;
+
 		numberScenes[i].first = new gef::Scene();
+		numberScenes[i].second = new gef::MeshInstance();
 		std::string numFilepath = "number";
 		numFilepath.append(std::to_string(i + 1));
 		numFilepath.append(".scn");
+
 		numberScenes[i].first->ReadSceneFromFile(platform_, numFilepath.c_str());
-
 		numberScenes[i].first->CreateMaterials(platform_);
-
-		numberScenes[i].second = GetFirstMesh(numberScenes[i].first);
+		numberScenes[i].second->set_mesh(GetFirstMesh(numberScenes[i].first));		
+		
+		numberScenes[i].second->set_transform(finalTransform);
 	}
 }
 
