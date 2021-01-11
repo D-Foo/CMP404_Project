@@ -920,7 +920,7 @@ void PicrossLevel::addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, ge
 	//{
 	//	rotMatrix2.RotationY(gef::DegToRad(180.0f));
 	//}
-	rotMatrix1 = rotMatrix1 * rotMatrix2;
+
 
 	//Place on appropriate side of cubes
 	gef::Vector4 translation = closestCube->getPosition();
@@ -929,6 +929,7 @@ void PicrossLevel::addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, ge
 		if (towardCamera)
 		{
 			translation -= gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
+			rotMatrix2.RotationY(gef::DegToRad(180.0f));
 		}
 		else
 		{
@@ -952,12 +953,15 @@ void PicrossLevel::addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, ge
 		if (towardCamera)
 		{
 			translation -= gef::Vector4(0.0f, 0.0f, cubeSideSize * 0.5f);
+			rotMatrix2.RotationY(gef::DegToRad(90.0f));
 		}
 		else
 		{
 			translation += gef::Vector4(0.0f, 0.0f, cubeSideSize * 0.5f);
+			rotMatrix2.RotationY(gef::DegToRad(270.0f));
 		}
 	}
+	rotMatrix1 = rotMatrix1 * rotMatrix2;
 	transformMatrix.SetTranslation(translation);
 	finalTransform = scaleMatrix * rotMatrix1 * transformMatrix;
 	//numberMeshes[numberNum].second->set_transform(finalTransform);
