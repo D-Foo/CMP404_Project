@@ -70,6 +70,7 @@ void StarterApp::Init()
 
 
 	pLevel->setSpacing(picrossSpacing);
+	pLevel->updateNumbers(numNumbers, &numberScenes[0], camera_eye_);
 	keyW = false;
 	//pLevel->pushIntoLevel(false, true, false, false, false, true, 2);
 	for (int i = 0; i < 3; ++i)
@@ -179,7 +180,7 @@ bool StarterApp::Update(float frame_time)
 					//Rotate Cam Right 90
 				}
 				camera_eye_ = gef::Vector4((sin(gef::DegToRad(cameraRotAmount)) * cameraDist), cameraYOffset, (cos(gef::DegToRad(cameraRotAmount)) * cameraDist ));
-				pLevel->updateRenderOrder();
+				pLevel->updateNumbers(numNumbers, numberScenes, camera_eye_);
 			}
 		}
 
@@ -243,7 +244,7 @@ void StarterApp::Render()
 
 	//renderer_3d_->DrawMesh(static_cast<gef::MeshInstance>(wall1));
 	pLevel->renderLevel(renderer_3d_);
-	pLevel->renderNumbers(renderer_3d_, numNumbers, &numberScenes[0], camera_eye_);
+	
 	for (int i = 0; i < numNumbers; ++i)
 	{
 		//renderer_3d_->DrawMesh(*numberScenes[i].second);

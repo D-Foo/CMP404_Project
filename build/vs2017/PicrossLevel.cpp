@@ -9,6 +9,10 @@ PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform, 
 	maxSizes[0] = rowSize;
 	maxSizes[1] = columnSize;
 	maxSizes[2] = depthSize;
+	minMaxMembersShown[0] = std::pair<int, int>(0, 0);
+	minMaxMembersShown[1] = std::pair<int, int>(0, 0);
+	minMaxMembersShown[2] = std::pair<int, int>(0, 0);
+
 
 	cubeSideSize = 25.0f;
 	levelScale = 1.0f;
@@ -44,12 +48,16 @@ PicrossLevel::~PicrossLevel()
 
 void PicrossLevel::renderLevel(gef::Renderer3D* renderer)
 {
-	for (auto& c : renderOrder)
+	/*for (auto& c : cubeRenderOrder)
 	{
 		if (cubes[c.first[0]][c.first[1]][c.first[2]] != nullptr)
 		{
 			renderer->DrawMesh(*cubes[c.first[0]][c.first[1]][c.first[2]]);
 		}
+	}*/
+	for (auto& m : renderOrder)
+	{
+		renderer->DrawMesh(*m.first);
 	}
 
 	/*for (int x = minRowShown; x < maxRowShown; ++x)
@@ -64,12 +72,28 @@ void PicrossLevel::renderLevel(gef::Renderer3D* renderer)
 	}*/
 }
 
-void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std::pair<gef::Scene*, gef::MeshInstance*>* numbers, gef::Vector4 cameraPos)
+void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::MeshInstance*>* numberMeshes, gef::Vector4 cameraPos)
 {
+	for (auto& n : this->numbers)
+	{
+		delete(n.first);
+	}
+	this->numbers.clear();
+
 	//Track number of final object cubes in each ...
 	std::vector<std::vector<int>> rowSums;
 	std::vector<std::vector<int>> columnSums;
 	std::vector<std::vector<int>> depthSums;
+
+	//TODO: REPLACE XYZ = 0 & COLUMNSIZE ETC. WITH THESE
+	int xStart = minMaxMembersShown[0].first;
+	int xEnd = minMaxMembersShown[0].second;
+
+	int yStart = minMaxMembersShown[1].first;
+	int yEnd = minMaxMembersShown[1].second;
+
+	int zStart = minMaxMembersShown[2].first;
+	int zEnd = minMaxMembersShown[2].second;
 
 	for (int y = 0; y < columnSize; ++y)
 	{
@@ -125,19 +149,20 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 	cameraPos.y() < levelCenter.y() ? bottom = true : bottom = false;
 	cameraPos.z() < levelCenter.z() ? front = true : front = false;
 
+	//TODO: SOOOO MUCH DUPLICATE CODE COME UP WITH TIDIER SOLUTION 
+
 	//Get closest cube in each row/column/depth to camera and render number at it's pos
-	//ROWS
 	PicrossCube* closestCube = nullptr;
 	PicrossCube* lowestCube = nullptr;
 	int lowestCubeNum = -1;
 	PicrossCube* highestCube = nullptr;
 	float closestDist = -1.0f;
 
+	//ROWS
 	for (int y = 0; y < columnSize; ++y)
 	{
 		for (int z = 0; z < depthSize; ++z)
 		{
-			
 			//If row contains a cube that's part of the final object
 			if (rowSums[y][z] != 0)
 			{
@@ -181,12 +206,23 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 							highestCube = cubes[x][y][z];
 							float lowDist = (cameraPos - lowestCube->getPosition()).Length();
 							float highDist = (cameraPos - highestCube->getPosition()).Length();
-							lowDist < highDist ? closestCube = lowestCube : closestCube = highestCube;
+							if (lowDist < highDist)
+							{
+								closestCube = lowestCube; 
+								closestDist = lowDist;
+
+							}
+							else
+							{
+								closestCube = highestCube;
+								closestDist = highDist;
+							}
 							break;
 						}
 						else
 						{
 							closestCube = lowestCube;
+							closestDist = (cameraPos - lowestCube->getPosition()).Length();
 							break;
 						}
 					}
@@ -194,56 +230,142 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 
 				if (closestCube != nullptr)
 				{
-					//Setup number transform
-					gef::Matrix44 finalTransform = gef::Matrix44::kIdentity;
-					gef::Matrix44 rotMatrix1 = gef::Matrix44::kIdentity;
-					gef::Matrix44 rotMatrix2 = gef::Matrix44::kIdentity;
-					gef::Matrix44 scaleMatrix = gef::Matrix44::kIdentity;
-					gef::Matrix44 transformMatrix = gef::Matrix44::kIdentity;
-					float scaleF = 0.1f;
-					scaleMatrix.Scale(gef::Vector4(scaleF, scaleF, scaleF, 1.0f));
-
-					//Rotate number
-					float rotF = 90.0f;
-					rotMatrix1.RotationZ(gef::DegToRad(rotF));
-					if (left)
-					{
-						rotMatrix2.RotationY(gef::DegToRad(180.0f));
-					}
-					rotMatrix1 = rotMatrix1 * rotMatrix2;
-
-					//Place on appropriate side of cubes
-					gef::Vector4 translation = closestCube->getPosition();
-					if (left)
-					{
-						translation -= gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
-					}
-					else
-					{
-						translation += gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
-					}
-					transformMatrix.SetTranslation(translation);
-					finalTransform = scaleMatrix * rotMatrix1 * transformMatrix;
-					numbers[rowSums[y][z] - 1].second->set_transform(finalTransform);
-
-					//Render appropriate number
-					//TODO: REPLACE WITH ADD TO RENDER ORDER
-					renderer->DrawMesh(*numbers[rowSums[y][z] - 1].second);
+					addNumber(closestCube, numberMeshes, rowSums[y][z] - 1, left, bottom, front, closestDist);
 				}
 			}
-
 		}
 	}
 
-	
-	for (size_t j = 0; j < columnSums.size(); ++j)
+	//COLUMNS
+	for (int x = 0; x < rowSize; ++x)
 	{
+		for (int z = 0; z < depthSize; ++z)
+		{
+			//If column contains a cube that's part of the final object
+			if (columnSums[x][z] != 0)
+			{
+				//Get end cubes on this row 
+				closestCube = nullptr;
+				lowestCube = nullptr;
+				highestCube = nullptr;
 
+				//Get low cube end
+				for (int y = 0; y < columnSize; ++y)
+				{
+					if (cubes[x][y][z] != nullptr)
+					{
+						lowestCube = cubes[x][y][z];
+						lowestCubeNum = y;
+						break;
+					}
+				}
+
+				//Get high cube end
+				for (int y = columnSize - 1; y >= 0; --y)
+				{
+					if (cubes[x][y][z] != nullptr)
+					{
+						//Check if different to lowestCube
+						if (y > lowestCubeNum)
+						{
+							highestCube = cubes[x][y][z];
+							float lowDist = (cameraPos - lowestCube->getPosition()).Length();
+							float highDist = (cameraPos - highestCube->getPosition()).Length();
+							if (lowDist < highDist)
+							{
+								closestCube = lowestCube;
+								closestDist = lowDist;
+
+							}
+							else
+							{
+								closestCube = highestCube;
+								closestDist = highDist;
+							}
+							break;
+						}
+						else
+						{
+							closestCube = lowestCube;
+							closestDist = (cameraPos - lowestCube->getPosition()).Length();
+							break;
+						}
+					}
+				}
+
+				if (closestCube != nullptr)
+				{
+					addNumber(closestCube, numberMeshes, columnSums[x][z] - 1, left, bottom, front, closestDist);
+				}
+			}
+		}
 	}
-	for (size_t k = 0; k < depthSums.size(); ++k)
+
+	//DEPTH
+	for (int x = 0; x < rowSize; ++x)
 	{
+		for (int y = 0; y < columnSize; ++y)
+		{
+			//If depth contains a cube that's part of the final object
+			if (depthSums[x][y] != 0)
+			{
+				//Get end cubes on this row 
+				closestCube = nullptr;
+				lowestCube = nullptr;
+				highestCube = nullptr;
 
+				//Get low cube end
+				for (int z = 0; z < depthSize; ++z)
+				{
+					if (cubes[x][y][z] != nullptr)
+					{
+						lowestCube = cubes[x][y][z];
+						lowestCubeNum = z;
+						break;
+					}
+				}
+
+				//Get high cube end
+				for (int z = 0; z < depthSize; ++z)
+				{
+					if (cubes[x][y][z] != nullptr)
+					{
+						//Check if different to lowestCube
+						if (z > lowestCubeNum)
+						{
+							float lowDist = (cameraPos - lowestCube->getPosition()).Length();
+							float highDist = (cameraPos - highestCube->getPosition()).Length();
+							if (lowDist < highDist)
+							{
+								closestCube = lowestCube;
+								closestDist = lowDist;
+
+							}
+							else
+							{
+								closestCube = highestCube;
+								closestDist = highDist;
+							}
+							break;
+						}
+						else
+						{
+							closestCube = lowestCube;
+							closestDist = (cameraPos - lowestCube->getPosition()).Length();
+							break;
+						}
+					}
+				}
+
+				if (closestCube != nullptr)
+				{
+					addNumber(closestCube, numberMeshes, depthSums[x][y] - 1, left, bottom, front, closestDist);
+				}
+			}
+		}
 	}
+
+	updateRenderOrder();
 }
 
 void PicrossLevel::setSpacing(float spacing)
@@ -352,9 +474,9 @@ bool PicrossLevel::selectCubeByTouch(gef::Vector2 screenSize, gef::Vector2 touch
 
 	//Ray to Cube Check
 	//Cubes sorted by closest to camera
-	for (size_t i = renderOrder.size() - 1; i > 0 ; --i) 
+	for (size_t i = cubeRenderOrder.size() - 1; i > 0 ; --i) 
 	{
-		PicrossCube* cube = cubes[renderOrder[i].first[0]][renderOrder[i].first[1]][renderOrder[i].first[2]];
+		PicrossCube* cube = cubes[cubeRenderOrder[i].first[0]][cubeRenderOrder[i].first[1]][cubeRenderOrder[i].first[2]];
 
 		if (cube != nullptr)
 		{
@@ -569,9 +691,9 @@ void PicrossLevel::GetScreenPosRay(const gef::Vector2& screen_position, const ge
 bool PicrossLevel::RayCubeIntersect(const gef::Vector4& start_point, gef::Vector4 rayDirection, int& cubeID)
 {
 	bool mark = true;
-	for (size_t i = renderOrder.size() - 1; i > 0; --i)
+	for (size_t i = cubeRenderOrder.size() - 1; i > 0; --i)
 	{
-		PicrossCube* cube = cubes[renderOrder[i].first[0]][renderOrder[i].first[1]][renderOrder[i].first[2]];
+		PicrossCube* cube = cubes[cubeRenderOrder[i].first[0]][cubeRenderOrder[i].first[1]][cubeRenderOrder[i].first[2]];
 
 		if (cube != nullptr)
 		{
@@ -626,9 +748,12 @@ bool PicrossLevel::RayCubeIntersect(const gef::Vector4& start_point, gef::Vector
 void PicrossLevel::updateRenderOrder()
 {
 	//Setup
+	cubeRenderOrder.clear();
 	renderOrder.clear();
 	
-	std::pair<int, int> minMaxMembersShown[3] = { std::pair<int, int>(0, 0) };	//Where to start and stop rendering each axis
+	minMaxMembersShown[0] = std::pair<int, int>(0, 0);
+	minMaxMembersShown[1] = std::pair<int, int>(0, 0);	
+	minMaxMembersShown[2] = std::pair<int, int>(0, 0);	
 
 	//Check for pushing and adjust what cubes are rendered
 	for (int i = 0; i < 3; ++i)
@@ -670,31 +795,69 @@ void PicrossLevel::updateRenderOrder()
 
 					float distance = abs(xDiff) + abs(yDiff) + abs(zDiff);
 					//if renderOrder not empty
-					if (!renderOrder.empty())
+					if (!cubeRenderOrder.empty())
 					{
 						//Iterate through and find a distance smaller than the current distance and insert it before it
-						for (std::vector<std::pair<std::array<int, 3>, float>>::iterator it = renderOrder.begin(); it != renderOrder.end(); ++it)
+						for (std::vector<std::pair<std::array<int, 3>, float>>::iterator it = cubeRenderOrder.begin(); it != cubeRenderOrder.end(); ++it)
 						{
 							if (it->second < distance)
 							{
-								renderOrder.insert(it, std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
+								cubeRenderOrder.insert(it, std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
 								break;
 							}
-							else if (it == renderOrder.end() - 1)
+							else if (it == cubeRenderOrder.end() - 1)
 							{
-								renderOrder.push_back(std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
+								cubeRenderOrder.push_back(std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
 								break;
 							}
 						}
 					}
 					else
 					{
-						renderOrder.push_back(std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
+						cubeRenderOrder.push_back(std::pair<std::array<int, 3>, float>(std::array<int, 3>{x, y, z}, distance));
 					}
 				}
 			}
 		}
 	}
+
+	//Create a combination of cubes and numbers to sort through and save as combined renderorder
+	std::vector<std::pair<gef::MeshInstance*, float>> unsortedOrder;
+	for (auto& c : cubeRenderOrder)
+	{
+		unsortedOrder.push_back(std::pair<gef::MeshInstance*, float>(cubes[c.first[0]][c.first[1]][c.first[2]], c.second));
+	}
+	for (auto& n : numbers)
+	{
+		unsortedOrder.push_back(std::pair<gef::MeshInstance*, float>(n.first, n.second));
+	}
+
+	//Add each element from unsorted order
+	for (size_t i = 0; i < unsortedOrder.size(); ++i)
+	{
+		if (!renderOrder.empty())
+		{
+			//Iterate through and find a distance smaller than the current distance and insert it before it
+			for (std::vector<std::pair<gef::MeshInstance*, float>>::iterator it = renderOrder.begin(); it != renderOrder.end(); ++it)
+			{
+				if (it->second < unsortedOrder[i].second)
+				{
+					renderOrder.insert(it, unsortedOrder[i]);
+					break;
+				}
+				else if (it == renderOrder.end() - 1)
+				{
+					renderOrder.push_back(unsortedOrder[i]);
+					break;
+				}
+			}
+		}
+		else
+		{
+			renderOrder.push_back(unsortedOrder[i]);
+		}
+	}
+
 }
 
 void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
@@ -736,4 +899,47 @@ void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 			}
 		}
 	}
+}
+
+void PicrossLevel::addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, gef::MeshInstance*>* numberMeshes, int numberNum, bool left, bool bottom, bool front, float distanceFromCamera)
+{
+	//Setup number transform
+	gef::Matrix44 finalTransform = gef::Matrix44::kIdentity;
+	gef::Matrix44 rotMatrix1 = gef::Matrix44::kIdentity;
+	gef::Matrix44 rotMatrix2 = gef::Matrix44::kIdentity;
+	gef::Matrix44 scaleMatrix = gef::Matrix44::kIdentity;
+	gef::Matrix44 transformMatrix = gef::Matrix44::kIdentity;
+	float scaleF = 0.1f;
+	scaleMatrix.Scale(gef::Vector4(scaleF, scaleF, scaleF, 1.0f));
+
+	//Rotate number
+	float rotF = 90.0f;
+	rotMatrix1.RotationZ(gef::DegToRad(rotF));
+	if (left)
+	{
+		//rotMatrix2.RotationY(gef::DegToRad(180.0f));
+	}
+	rotMatrix1 = rotMatrix1 * rotMatrix2;
+
+	//Place on appropriate side of cubes
+	gef::Vector4 translation = closestCube->getPosition();
+	if (left)
+	{
+		translation -= gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
+	}
+	else
+	{
+		translation += gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
+	}
+	transformMatrix.SetTranslation(translation);
+	finalTransform = scaleMatrix * rotMatrix1 * transformMatrix;
+	//numberMeshes[numberNum].second->set_transform(finalTransform);
+
+	//Render appropriate number
+	//TODO: REPLACE WITH ADD TO RENDER ORDER
+	//renderer->DrawMesh(*numbers[rowSums[y][z] - 1].second);
+	gef::MeshInstance* temp = new gef::MeshInstance();
+	temp->set_mesh(numberMeshes[numberNum].second->mesh());
+	temp->set_transform(finalTransform);
+	numbers.push_back(std::pair<gef::MeshInstance*, float>(temp, distanceFromCamera));
 }

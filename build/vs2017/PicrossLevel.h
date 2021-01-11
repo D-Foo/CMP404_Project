@@ -26,7 +26,7 @@ public:
 	~PicrossLevel();
 
 	void renderLevel(gef::Renderer3D* renderer);
-	void renderNumbers(gef::Renderer3D* renderer, int numNumbers, std::pair<gef::Scene*, gef::MeshInstance*>* numbers, gef::Vector4 cameraPos);
+	void updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::MeshInstance*>* numbers, gef::Vector4 cameraPos);
 	void setSpacing(float spacing);
 	void setCameraPosPtr(gef::Vector4* cameraPos);
 
@@ -63,9 +63,11 @@ private:
 	gef::Vector4 cubeSize;
 
 	void initCubes(PrimitiveBuilder* pBuilder);
+	void addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, gef::MeshInstance*>* numberMeshes, int numberNum, bool left, bool bottom, bool front, float distanceFromCamera);
 
 	std::vector<std::vector<std::vector<PicrossCube*>>> cubes;	//3D container of cubes. Access with XYZ, nullptr if cube was erased
-	std::vector<std::pair<std::array<int, 3>, float>> renderOrder;	//Sorted vector of cubeIndexes by largest cube distance to camera to smallest 
+	std::vector<std::pair<std::array<int, 3>, float>> cubeRenderOrder;	//Sorted vector of cubeIndexes by largest cube distance to camera to smallest 
+	std::vector<std::pair<gef::MeshInstance*, float>> renderOrder;
 	gef::Mesh* defaultCubeMesh;
 	gef::Mesh* redCubeMesh;
 	gef::Material** redMat;
@@ -82,5 +84,7 @@ private:
 	PushVars pushVars[3]; //[x][y][z]
 	gef::Vector4* cameraPos;
 	std::vector<std::vector<std::vector<bool>>> shape;
+	std::vector<std::pair<gef::MeshInstance*, float>> numbers;	//3D numbers to render
+	std::pair<int, int> minMaxMembersShown[3];	//Where to start and stop rendering each axis
 };
 
