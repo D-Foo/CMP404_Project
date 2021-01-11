@@ -128,23 +128,29 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 	//Get closest cube in each row/column/depth to camera and render number at it's pos
 	//ROWS
 	PicrossCube* closestCube = nullptr;
+	PicrossCube* lowestCube = nullptr;
+	int lowestCubeNum = -1;
+	PicrossCube* highestCube = nullptr;
 	float closestDist = -1.0f;
 
 	for (int y = 0; y < columnSize; ++y)
 	{
 		for (int z = 0; z < depthSize; ++z)
 		{
+			//Get end cubes on this row 
 			closestCube = nullptr;
+			lowestCube = nullptr;
+			highestCube = nullptr;
 			if (rowSums[y][z] != 0)
 			{
-				for (int x = 0; x < rowSize; ++x)
+				for(int x = 0; x < rowSize; ++x)
 				{
 					if (cubes[x][y][z] != nullptr)
 					{
-						if (closestCube == nullptr)
+						/*if (closestCube == nullptr)
 						{
 							closestCube = cubes[x][y][z];
-							closestDist = (cameraPos - closestCube->getPosition()).Length();
+						
 						}
 						else
 						{
@@ -153,9 +159,32 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 								closestDist = (cameraPos - closestCube->getPosition()).Length();
 								closestCube = cubes[x][y][z];
 							}
+						}*/
+						lowestCube = cubes[x][y][z];
+						lowestCubeNum = x;
+						break;
+					}
+				}
+				for (int x = rowSize - 1; x >= 0; --x)
+				{
+					if (cubes[x][y][z] != nullptr)
+					{
+						if (x > lowestCubeNum)
+						{
+							highestCube = cubes[x][y][z];
+							float lowDist = (cameraPos - lowestCube->getPosition()).Length();
+							float highDist = (cameraPos - highestCube->getPosition()).Length();
+							lowDist < highDist ? closestCube = lowestCube : closestCube = highestCube;
+							break;
+						}
+						else
+						{
+							closestCube = lowestCube;
+							break;
 						}
 					}
 				}
+
 				if (closestCube != nullptr)
 				{
 					//Setup number transform
@@ -164,7 +193,7 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 					gef::Matrix44 rotMatrix2 = gef::Matrix44::kIdentity;
 					gef::Matrix44 scaleMatrix = gef::Matrix44::kIdentity;
 					gef::Matrix44 transformMatrix = gef::Matrix44::kIdentity;
-					float scaleF = 10.0f;
+					float scaleF = 0.1f;
 					float rotF = 90.0f;
 					rotMatrix1.RotationZ(gef::DegToRad(rotF));
 					scaleMatrix.Scale(gef::Vector4(scaleF, scaleF, scaleF, 1.0f));
@@ -172,14 +201,14 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 					//Rotate number
 					if (left)
 					{
-						rotMatrix2.RotationY(gef::DegToRad(rotF));
+						//rotMatrix2.RotationY(gef::DegToRad(rotF));
 					}
 					else
 					{
-						rotMatrix2.RotationY(gef::DegToRad(-rotF));
+						//rotMatrix2.RotationY(gef::DegToRad(-rotF));
 					}
 					rotMatrix1 = rotMatrix1 * rotMatrix2;
-
+					//rotMatrix1 = gef::Matrix44::kIdentity;
 					//Place on appropriate side of cubes
 					gef::Vector4 translation = closestCube->getPosition();
 					if (left)
@@ -191,7 +220,7 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 						translation += gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
 					}
 					transformMatrix.SetTranslation(translation);
-					finalTransform = rotMatrix1 * scaleMatrix * transformMatrix;
+					finalTransform = scaleMatrix * rotMatrix1 * transformMatrix;
 					numbers[rowSums[y][z] - 1].second->set_transform(finalTransform);
 
 					//Render appropriate number
@@ -696,6 +725,10 @@ void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 				//Store
 				cubes[x][y].push_back(temp);
 				cubes[x][y][z]->setFinalObject(shape[x][y][z]);
+				if (cubes[x][y][z]->getFinalObject())
+				{
+					cubes[x][y][z]->set_mesh(redCubeMesh);
+				}
 			}
 		}
 	}
