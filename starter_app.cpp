@@ -204,6 +204,7 @@ bool StarterApp::Update(float frame_time)
 					Picross::CubeCoords cubeCoords;
 					pLevel->selectCubeByTouch2(gef::Vector2(platform_.width(), platform_.height()), touchPosition, renderer_3d_->projection_matrix(), renderer_3d_->view_matrix(), rayDirValues, false, cubeCoords);
 					pLevel->destroyCube(cubeCoords);
+					pLevel->updateNumbers(numNumbers, numberScenes, camera_eye_);
 				}
 				else
 				{
@@ -315,6 +316,7 @@ void StarterApp::DrawHUD()
 		if (ImGui::InputInt(label.c_str(), &pushingControls[i].first))
 		{
 			pLevel->pushIntoLevel(i, pushingControls[i].second, pushingControls[i].first);
+			pLevel->updateNumbers(numNumbers, numberScenes, camera_eye_);
 		}
 		if (ImGui::Button("Reverse Direction"))
 		{

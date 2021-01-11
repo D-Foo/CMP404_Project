@@ -63,7 +63,7 @@ private:
 	gef::Vector4 cubeSize;
 
 	void initCubes(PrimitiveBuilder* pBuilder);
-	void addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, gef::MeshInstance*>* numberMeshes, int numberNum, bool left, bool bottom, bool front, float distanceFromCamera);
+	void addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, gef::MeshInstance*>* numberMeshes, int numberNum, bool row, bool column, bool depth, bool towardCamera, float distanceFromCamera);
 
 	std::vector<std::vector<std::vector<PicrossCube*>>> cubes;	//3D container of cubes. Access with XYZ, nullptr if cube was erased
 	std::vector<std::pair<std::array<int, 3>, float>> cubeRenderOrder;	//Sorted vector of cubeIndexes by largest cube distance to camera to smallest 

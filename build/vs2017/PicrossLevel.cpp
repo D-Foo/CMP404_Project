@@ -95,7 +95,7 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 	int zStart = minMaxMembersShown[2].first;
 	int zEnd = minMaxMembersShown[2].second;
 
-	for (int y = 0; y < columnSize; ++y)
+	for (int y = yStart; y < yEnd; ++y)
 	{
 		rowSums.push_back(std::vector<int>());
 		for(int z = 0; z < depthSize; ++z)
@@ -103,29 +103,29 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 			rowSums[y].push_back(0);
 		}
 	}
-	for (int x = 0; x < rowSize; ++x)
+	for (int x = xStart; x < xEnd; ++x)
 	{
 		columnSums.push_back(std::vector<int>());
-		for (int z = 0; z < depthSize; ++z)
+		for (int z = zStart; z < zEnd; ++z)
 		{
 			columnSums[x].push_back(0);
 		}
 	}
-	for (int x = 0; x < rowSize; ++x)
+	for (int x = xStart; x < xEnd; ++x)
 	{
 		depthSums.push_back(std::vector<int>());
-		for (int y = 0; y < columnSize; ++y)
+		for (int y = yStart; y < yEnd; ++y)
 		{
 			depthSums[x].push_back(0);
 		}
 	}
 
 	//Get finalObject cubes and sum
-	for (size_t i = 0; i < cubes.size(); ++i)
+	for (size_t i = xStart; i < xEnd; ++i)
 	{
-		for (size_t j = 0; j < cubes[i].size(); ++j)
+		for (size_t j = yStart; j < yEnd; ++j)
 		{
-			for (size_t k = 0; k < cubes[i][j].size(); ++k)
+			for (size_t k = zStart; k < zEnd; ++k)
 			{
 				if (cubes[i][j][k] != nullptr)
 				{
@@ -159,9 +159,9 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 	float closestDist = -1.0f;
 
 	//ROWS
-	for (int y = 0; y < columnSize; ++y)
+	for (int y = yStart; y < yEnd; ++y)
 	{
-		for (int z = 0; z < depthSize; ++z)
+		for (int z = zStart; z < zEnd; ++z)
 		{
 			//If row contains a cube that's part of the final object
 			if (rowSums[y][z] != 0)
@@ -172,7 +172,7 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 				highestCube = nullptr;
 
 				//Get low cube end
-				for(int x = 0; x < rowSize; ++x)
+				for (int x = xStart; x < xEnd; ++x)
 				{
 					if (cubes[x][y][z] != nullptr)
 					{
@@ -196,7 +196,7 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 				}
 
 				//Get high cube end
-				for (int x = rowSize - 1; x >= 0; --x)
+				for (int x = xEnd - 1; x >= xStart; --x)
 				{
 					if (cubes[x][y][z] != nullptr)
 					{
@@ -230,16 +230,16 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 
 				if (closestCube != nullptr)
 				{
-					addNumber(closestCube, numberMeshes, rowSums[y][z] - 1, left, bottom, front, closestDist);
+					addNumber(closestCube, numberMeshes, rowSums[y][z] - 1, true, false, false, left, closestDist);
 				}
 			}
 		}
 	}
 
 	//COLUMNS
-	for (int x = 0; x < rowSize; ++x)
+	for (int x = xStart; x < xEnd; ++x)
 	{
-		for (int z = 0; z < depthSize; ++z)
+		for (int z = zStart; z < zEnd; ++z)
 		{
 			//If column contains a cube that's part of the final object
 			if (columnSums[x][z] != 0)
@@ -250,7 +250,7 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 				highestCube = nullptr;
 
 				//Get low cube end
-				for (int y = 0; y < columnSize; ++y)
+				for (int y = yStart; y < yEnd; ++y)
 				{
 					if (cubes[x][y][z] != nullptr)
 					{
@@ -261,7 +261,7 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 				}
 
 				//Get high cube end
-				for (int y = columnSize - 1; y >= 0; --y)
+				for (int y = yEnd - 1; y >= yStart; --y)
 				{
 					if (cubes[x][y][z] != nullptr)
 					{
@@ -295,16 +295,16 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 
 				if (closestCube != nullptr)
 				{
-					addNumber(closestCube, numberMeshes, columnSums[x][z] - 1, left, bottom, front, closestDist);
+					addNumber(closestCube, numberMeshes, columnSums[x][z] - 1, false, true, false, bottom, closestDist);
 				}
 			}
 		}
 	}
 
 	//DEPTH
-	for (int x = 0; x < rowSize; ++x)
+	for (int x = xStart; x < xEnd; ++x)
 	{
-		for (int y = 0; y < columnSize; ++y)
+		for (int y = yStart; y < yEnd; ++y)
 		{
 			//If depth contains a cube that's part of the final object
 			if (depthSums[x][y] != 0)
@@ -315,7 +315,7 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 				highestCube = nullptr;
 
 				//Get low cube end
-				for (int z = 0; z < depthSize; ++z)
+				for (int z = zStart; z < zEnd; ++z)
 				{
 					if (cubes[x][y][z] != nullptr)
 					{
@@ -326,13 +326,14 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 				}
 
 				//Get high cube end
-				for (int z = 0; z < depthSize; ++z)
+				for (int z = zEnd - 1; z >= zStart; --z)
 				{
 					if (cubes[x][y][z] != nullptr)
 					{
 						//Check if different to lowestCube
 						if (z > lowestCubeNum)
 						{
+							highestCube = cubes[x][y][z];
 							float lowDist = (cameraPos - lowestCube->getPosition()).Length();
 							float highDist = (cameraPos - highestCube->getPosition()).Length();
 							if (lowDist < highDist)
@@ -359,7 +360,7 @@ void PicrossLevel::updateNumbers(int numNumbers, std::pair<gef::Scene*, gef::Mes
 
 				if (closestCube != nullptr)
 				{
-					addNumber(closestCube, numberMeshes, depthSums[x][y] - 1, left, bottom, front, closestDist);
+					addNumber(closestCube, numberMeshes, depthSums[x][y] - 1, false, false, true, front, closestDist);
 				}
 			}
 		}
@@ -901,7 +902,7 @@ void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 	}
 }
 
-void PicrossLevel::addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, gef::MeshInstance*>* numberMeshes, int numberNum, bool left, bool bottom, bool front, float distanceFromCamera)
+void PicrossLevel::addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, gef::MeshInstance*>* numberMeshes, int numberNum, bool row, bool column, bool depth, bool towardCamera, float distanceFromCamera)
 {
 	//Setup number transform
 	gef::Matrix44 finalTransform = gef::Matrix44::kIdentity;
@@ -915,21 +916,47 @@ void PicrossLevel::addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, ge
 	//Rotate number
 	float rotF = 90.0f;
 	rotMatrix1.RotationZ(gef::DegToRad(rotF));
-	if (left)
-	{
-		//rotMatrix2.RotationY(gef::DegToRad(180.0f));
-	}
+	//if (left)
+	//{
+	//	rotMatrix2.RotationY(gef::DegToRad(180.0f));
+	//}
 	rotMatrix1 = rotMatrix1 * rotMatrix2;
 
 	//Place on appropriate side of cubes
 	gef::Vector4 translation = closestCube->getPosition();
-	if (left)
+	if (row)
 	{
-		translation -= gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
+		if (towardCamera)
+		{
+			translation -= gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
+		}
+		else
+		{
+			translation += gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
+		}
 	}
-	else
+	else if (column)
 	{
-		translation += gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
+		if (towardCamera)
+		{
+
+			translation -= gef::Vector4(0.0f, cubeSideSize * 0.5f, 0.0f);
+		}
+		else
+		{
+			translation += gef::Vector4(0.0f, cubeSideSize * 0.5f, 0.0f);
+		}
+	}
+	else if (depth)
+	{
+		if (towardCamera)
+		{
+			translation -= gef::Vector4(0.0f, 0.0f, cubeSideSize * 0.5f);
+		}
+		else
+		{
+			translation += gef::Vector4(0.0f, 0.0f, cubeSideSize * 0.5f);
+		}
 	}
 	transformMatrix.SetTranslation(translation);
 	finalTransform = scaleMatrix * rotMatrix1 * transformMatrix;
