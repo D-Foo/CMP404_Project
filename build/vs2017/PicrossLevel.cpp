@@ -137,12 +137,16 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 	{
 		for (int z = 0; z < depthSize; ++z)
 		{
-			//Get end cubes on this row 
-			closestCube = nullptr;
-			lowestCube = nullptr;
-			highestCube = nullptr;
+			
+			//If row contains a cube that's part of the final object
 			if (rowSums[y][z] != 0)
 			{
+				//Get end cubes on this row 
+				closestCube = nullptr;
+				lowestCube = nullptr;
+				highestCube = nullptr;
+
+				//Get low cube end
 				for(int x = 0; x < rowSize; ++x)
 				{
 					if (cubes[x][y][z] != nullptr)
@@ -165,10 +169,13 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 						break;
 					}
 				}
+
+				//Get high cube end
 				for (int x = rowSize - 1; x >= 0; --x)
 				{
 					if (cubes[x][y][z] != nullptr)
 					{
+						//Check if different to lowestCube
 						if (x > lowestCubeNum)
 						{
 							highestCube = cubes[x][y][z];
@@ -194,21 +201,17 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 					gef::Matrix44 scaleMatrix = gef::Matrix44::kIdentity;
 					gef::Matrix44 transformMatrix = gef::Matrix44::kIdentity;
 					float scaleF = 0.1f;
-					float rotF = 90.0f;
-					rotMatrix1.RotationZ(gef::DegToRad(rotF));
 					scaleMatrix.Scale(gef::Vector4(scaleF, scaleF, scaleF, 1.0f));
 
 					//Rotate number
+					float rotF = 90.0f;
+					rotMatrix1.RotationZ(gef::DegToRad(rotF));
 					if (left)
 					{
-						//rotMatrix2.RotationY(gef::DegToRad(rotF));
-					}
-					else
-					{
-						//rotMatrix2.RotationY(gef::DegToRad(-rotF));
+						rotMatrix2.RotationY(gef::DegToRad(180.0f));
 					}
 					rotMatrix1 = rotMatrix1 * rotMatrix2;
-					//rotMatrix1 = gef::Matrix44::kIdentity;
+
 					//Place on appropriate side of cubes
 					gef::Vector4 translation = closestCube->getPosition();
 					if (left)
@@ -224,6 +227,7 @@ void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std:
 					numbers[rowSums[y][z] - 1].second->set_transform(finalTransform);
 
 					//Render appropriate number
+					//TODO: REPLACE WITH ADD TO RENDER ORDER
 					renderer->DrawMesh(*numbers[rowSums[y][z] - 1].second);
 				}
 			}
