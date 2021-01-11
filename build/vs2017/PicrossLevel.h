@@ -41,7 +41,7 @@ public:
 private:
 	
 	void GetScreenPosRay(const gef::Vector2& screen_position, const gef::Matrix44& projection, const gef::Matrix44& view, gef::Vector4& start_point, gef::Vector4& direction, float screen_width, float screen_height, float ndc_z_min);
-	bool RayCubeIntersect(const gef::Vector4& start_point, gef::Vector4 direction, int& cubeID);
+	bool RayCubeIntersect(const gef::Vector4& start_point, gef::Vector4 direction, Picross::CubeCoords& cubeCoords);
 
 	float currentlySelectedCube[3];
 	

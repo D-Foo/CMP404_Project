@@ -534,8 +534,7 @@ bool PicrossLevel::selectCubeByTouch2(gef::Vector2 screenSize, gef::Vector2 touc
 {
 	gef::Vector4 startPoint, direction;
 	GetScreenPosRay(touchPos, projectionMatrix, viewMatrix, startPoint, direction, screenSize.x, screenSize.y, ndczmin);
-	int cubeID = 0;
-	return RayCubeIntersect(startPoint, direction, cubeID);
+	return RayCubeIntersect(startPoint, direction, coords);
 }
 
 void PicrossLevel::resetCubeColours()
@@ -689,7 +688,7 @@ void PicrossLevel::GetScreenPosRay(const gef::Vector2& screen_position, const ge
 	direction.Normalise();
 }
 
-bool PicrossLevel::RayCubeIntersect(const gef::Vector4& start_point, gef::Vector4 rayDirection, int& cubeID)
+bool PicrossLevel::RayCubeIntersect(const gef::Vector4& start_point, gef::Vector4 rayDirection, Picross::CubeCoords& cubeCoords)
 {
 	bool mark = true;
 	for (size_t i = cubeRenderOrder.size() - 1; i > 0; --i)
@@ -737,7 +736,7 @@ bool PicrossLevel::RayCubeIntersect(const gef::Vector4& start_point, gef::Vector
 				{
 					cube->set_mesh(redCubeMesh);
 				}
-				Picross::CubeCoords coords = cube->getCoords();
+				cubeCoords = cube->getCoords();
 				return true;
 			}
 		}
@@ -940,11 +939,12 @@ void PicrossLevel::addNumber(PicrossCube* closestCube, std::pair<gef::Scene*, ge
 	{
 		if (towardCamera)
 		{
-
+			rotMatrix1.RotationZ(gef::DegToRad(180.0f));
 			translation -= gef::Vector4(0.0f, cubeSideSize * 0.5f, 0.0f);
 		}
 		else
 		{
+			rotMatrix1 = gef::Matrix44::kIdentity;
 			translation += gef::Vector4(0.0f, cubeSideSize * 0.5f, 0.0f);
 		}
 	}
