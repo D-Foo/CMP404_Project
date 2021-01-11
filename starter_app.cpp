@@ -79,7 +79,9 @@ void StarterApp::Init()
 	}
 
 	destroyButtonDown = false;
+	protectButtonDown = false;
 	destroyKey = gef::Keyboard::KC_R;
+	protectKey= gef::Keyboard::KC_P;
 	cameraDist = 350.0f;
 	cameraYOffset = 5.0f;
 	cameraXZOffset = 5.0f;
@@ -126,6 +128,7 @@ bool StarterApp::Update(float frame_time)
 	fps_ = 1.0f / frame_time;
 	keyW = false;
 	destroyButtonDown = false;
+	protectButtonDown = false;
 
 	// read input devices
 	if (input_manager_)
@@ -157,6 +160,10 @@ bool StarterApp::Update(float frame_time)
 			if (keyboard->IsKeyDown(destroyKey))
 			{
 				destroyButtonDown = true;
+			}
+			if (keyboard->IsKeyDown(protectKey))
+			{
+				protectButtonDown = true;
 			}
 			if (keyboard->IsKeyPressed(keyboard->KC_LEFT) || keyboard->IsKeyPressed(keyboard->KC_RIGHT))
 			{
@@ -202,12 +209,22 @@ bool StarterApp::Update(float frame_time)
 					projection_matrix = platform_.PerspectiveProjectionFov(camera_fov_, (float)platform_.width() / (float)platform_.height(), near_plane_, far_plane_);
 					view_matrix.LookAt(camera_eye_, camera_lookat_, camera_up_);
 
-					if (destroyButtonDown)
+					if (protectButtonDown)
 					{
 						Picross::CubeCoords cubeCoords;
-						pLevel->selectCubeByTouch2(gef::Vector2(platform_.width(), platform_.height()), touchPosition, renderer_3d_->projection_matrix(), renderer_3d_->view_matrix(), rayDirValues, false, cubeCoords);
-						pLevel->destroyCube(cubeCoords);
-						pLevel->updateNumbers(numNumbers, numberScenes, camera_eye_);
+						if (pLevel->selectCubeByTouch2(gef::Vector2(platform_.width(), platform_.height()), touchPosition, renderer_3d_->projection_matrix(), renderer_3d_->view_matrix(), rayDirValues, false, cubeCoords))
+						{
+							pLevel->toggleCubeProtected(cubeCoords);
+						}
+					}
+					else if (destroyButtonDown)
+					{
+						Picross::CubeCoords cubeCoords;
+						if (pLevel->selectCubeByTouch2(gef::Vector2(platform_.width(), platform_.height()), touchPosition, renderer_3d_->projection_matrix(), renderer_3d_->view_matrix(), rayDirValues, false, cubeCoords))
+						{
+							pLevel->destroyCube(cubeCoords);
+							pLevel->updateNumbers(numNumbers, numberScenes, camera_eye_);
+						}
 					}
 					else
 					{

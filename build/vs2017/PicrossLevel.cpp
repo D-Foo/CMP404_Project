@@ -27,10 +27,13 @@ PicrossLevel::PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform, 
 
 	//Create redMaterial
 	redMat = new gef::Material*[6]();
+	blueMat = new gef::Material*[6]();
 	for (int i = 0; i < 6; i++)
 	{
 		redMat[i] = new gef::Material();
 		redMat[i]->set_colour(0xff0000ff);
+		blueMat[i] = new gef::Material();
+		blueMat[i]->set_colour(0xffff0000);
 	}
 	
 
@@ -612,49 +615,53 @@ bool PicrossLevel::destroyCube(Picross::CubeCoords coords)
 
 	if (cubes[x][y][z] != nullptr)
 	{
-		//Check if cube is part of the final shape of the level
-		if (cubes[x][y][z]->getFinalObject())
+		
+		if (!cubes[x][y][z]->getProtected())
 		{
-			//Lose a life
-			--lives;
-			if (lives == 0)
+			//Check if cube is part of the final shape of the level
+			if (cubes[x][y][z]->getFinalObject())
 			{
-				gameOver = true;
-				return false;
-			}
-		}
-		else
-		{
-			//Delete cube
-			//cubes[x][y].erase(cubes[x][y].begin() + z);
-			delete(cubes[x][y][z]);
-			cubes[x][y][z] = nullptr;
-
-			bool levelClear = true;
-
-			//Check if only final objects left
-			for (auto& v1 : cubes)
-			{
-				for (auto& v2 : v1)
+				//Lose a life
+				--lives;
+				if (lives == 0)
 				{
-					for (auto& c : v2)
+					gameOver = true;
+					return false;
+				}
+			}
+			else
+			{
+				//Delete cube
+				//cubes[x][y].erase(cubes[x][y].begin() + z);
+				delete(cubes[x][y][z]);
+				cubes[x][y][z] = nullptr;
+
+				bool levelClear = true;
+
+				//Check if only final objects left
+				for (auto& v1 : cubes)
+				{
+					for (auto& v2 : v1)
 					{
-						if (c != nullptr)
+						for (auto& c : v2)
 						{
-
-
-							if (!c->getFinalObject())
+							if (c != nullptr)
 							{
-								levelClear = false;
-								break;
+
+
+								if (!c->getFinalObject())
+								{
+									levelClear = false;
+									break;
+								}
 							}
 						}
 					}
 				}
-			}
-			if (levelClear)
-			{
-				//TODO: return enum?
+				if (levelClear)
+				{
+					//TODO: return enum?
+				}
 			}
 		}
 	}
@@ -690,7 +697,7 @@ void PicrossLevel::GetScreenPosRay(const gef::Vector2& screen_position, const ge
 
 bool PicrossLevel::RayCubeIntersect(const gef::Vector4& start_point, gef::Vector4 rayDirection, Picross::CubeCoords& cubeCoords)
 {
-	bool mark = true;
+	bool mark = false;
 	for (size_t i = cubeRenderOrder.size() - 1; i > 0; --i)
 	{
 		PicrossCube* cube = cubes[cubeRenderOrder[i].first[0]][cubeRenderOrder[i].first[1]][cubeRenderOrder[i].first[2]];
@@ -860,10 +867,24 @@ void PicrossLevel::updateRenderOrder()
 
 }
 
+void PicrossLevel::toggleCubeProtected(Picross::CubeCoords coords)
+{
+	cubes[coords.x][coords.y][coords.z]->setProtected(!cubes[coords.x][coords.y][coords.z]->getProtected());
+	if (cubes[coords.x][coords.y][coords.z]->getProtected())
+	{
+		cubes[coords.x][coords.y][coords.z]->set_mesh(blueCubeMesh);
+	}
+	else
+	{
+		cubes[coords.x][coords.y][coords.z]->set_mesh(defaultCubeMesh);
+	}
+}
+
 void PicrossLevel::initCubes(PrimitiveBuilder* pBuilder)
 {
 
 	redCubeMesh = pBuilder->CreateBoxMesh(gef::Vector4(cubeSideSize / 2.0f, cubeSideSize / 2.0f, cubeSideSize / 2.0f), gef::Vector4(0.0f, 0.0f, 0.0f), redMat);
+	blueCubeMesh = pBuilder->CreateBoxMesh(gef::Vector4(cubeSideSize / 2.0f, cubeSideSize / 2.0f, cubeSideSize / 2.0f), gef::Vector4(0.0f, 0.0f, 0.0f), blueMat);
 
 	bool spacingEnabled = true;
 

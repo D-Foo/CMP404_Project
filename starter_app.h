@@ -87,7 +87,9 @@ private:
 	gef::Vector4 rayDirValues;
 	std::pair<int, bool> pushingControls[3];
 	gef::Keyboard::KeyCode destroyKey;
+	gef::Keyboard::KeyCode protectKey;
 	bool destroyButtonDown;
+	bool protectButtonDown;
 
 	//Camera
 	float cameraDist;

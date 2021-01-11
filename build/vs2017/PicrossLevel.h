@@ -37,6 +37,7 @@ public:
 	void pushIntoLevel(int axis, bool reverseDirection, int amount = 1);	//Todo: Come up with better parameters
 	bool destroyCube(Picross::CubeCoords coords);
 	void updateRenderOrder();
+	void toggleCubeProtected(Picross::CubeCoords coords);
 
 private:
 	
@@ -70,7 +71,9 @@ private:
 	std::vector<std::pair<gef::MeshInstance*, float>> renderOrder;
 	gef::Mesh* defaultCubeMesh;
 	gef::Mesh* redCubeMesh;
+	gef::Mesh* blueCubeMesh;
 	gef::Material** redMat;
+	gef::Material** blueMat;
 	gef::Texture* tempTex;
 
 	//Pushing Vars
