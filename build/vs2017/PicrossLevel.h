@@ -14,6 +14,9 @@
 #include "CollisionDetector.h"
 #include <deque>
 #include "PicrossStructs.hpp"
+#include <graphics/scene.h>
+#include <array>
+#include "maths/math_utils.h"
 
 #pragma once
 class PicrossLevel
@@ -22,7 +25,8 @@ public:
 	PicrossLevel(PrimitiveBuilder* pBuilder, gef::Platform& platform, std::vector<std::vector<std::vector<bool>>> shape);
 	~PicrossLevel();
 
-	void render(gef::Renderer3D* renderer);
+	void renderLevel(gef::Renderer3D* renderer);
+	void renderNumbers(gef::Renderer3D* renderer, int numNumbers, std::pair<gef::Scene*, gef::MeshInstance*>* numbers, gef::Vector4 cameraPos);
 	void setSpacing(float spacing);
 	void setCameraPosPtr(gef::Vector4* cameraPos);
 

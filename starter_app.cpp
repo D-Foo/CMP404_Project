@@ -242,11 +242,11 @@ void StarterApp::Render()
 	//renderer_3d_->DrawMesh(*ball2Mesh);
 
 	//renderer_3d_->DrawMesh(static_cast<gef::MeshInstance>(wall1));
-	//pLevel->render(renderer_3d_);
-
+	pLevel->renderLevel(renderer_3d_);
+	pLevel->renderNumbers(renderer_3d_, numNumbers, &numberScenes[0], camera_eye_);
 	for (int i = 0; i < numNumbers; ++i)
 	{
-		renderer_3d_->DrawMesh(*numberScenes[i].second);
+		//renderer_3d_->DrawMesh(*numberScenes[i].second);
 	}
 
 	//renderer_3d_->DrawMesh(*temp);

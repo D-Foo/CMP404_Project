@@ -42,7 +42,7 @@ PicrossLevel::~PicrossLevel()
 {
 }
 
-void PicrossLevel::render(gef::Renderer3D* renderer)
+void PicrossLevel::renderLevel(gef::Renderer3D* renderer)
 {
 	for (auto& c : renderOrder)
 	{
@@ -62,6 +62,155 @@ void PicrossLevel::render(gef::Renderer3D* renderer)
 			}
 		}
 	}*/
+}
+
+void PicrossLevel::renderNumbers(gef::Renderer3D* renderer, int numNumbers, std::pair<gef::Scene*, gef::MeshInstance*>* numbers, gef::Vector4 cameraPos)
+{
+	//Track number of final object cubes in each ...
+	std::vector<std::vector<int>> rowSums;
+	std::vector<std::vector<int>> columnSums;
+	std::vector<std::vector<int>> depthSums;
+
+	for (int y = 0; y < columnSize; ++y)
+	{
+		rowSums.push_back(std::vector<int>());
+		for(int z = 0; z < depthSize; ++z)
+		{
+			rowSums[y].push_back(0);
+		}
+	}
+	for (int x = 0; x < rowSize; ++x)
+	{
+		columnSums.push_back(std::vector<int>());
+		for (int z = 0; z < depthSize; ++z)
+		{
+			columnSums[x].push_back(0);
+		}
+	}
+	for (int x = 0; x < rowSize; ++x)
+	{
+		depthSums.push_back(std::vector<int>());
+		for (int y = 0; y < columnSize; ++y)
+		{
+			depthSums[x].push_back(0);
+		}
+	}
+
+	//Get finalObject cubes and sum
+	for (size_t i = 0; i < cubes.size(); ++i)
+	{
+		for (size_t j = 0; j < cubes[i].size(); ++j)
+		{
+			for (size_t k = 0; k < cubes[i][j].size(); ++k)
+			{
+				if (cubes[i][j][k] != nullptr)
+				{
+					if (cubes[i][j][k]->getFinalObject())
+					{
+						++rowSums[j][k];
+						++columnSums[i][k];
+						++depthSums[i][j];
+					}
+				}
+			}
+		}
+	}
+
+	//Render on side facing toward camera
+	bool left = false;
+	bool bottom = false;
+	bool front = false;
+
+	cameraPos.x() < levelCenter.x() ? left = true : left = false;
+	cameraPos.y() < levelCenter.y() ? bottom = true : bottom = false;
+	cameraPos.z() < levelCenter.z() ? front = true : front = false;
+
+	//Get closest cube in each row/column/depth to camera and render number at it's pos
+	//ROWS
+	PicrossCube* closestCube = nullptr;
+	float closestDist = -1.0f;
+
+	for (int y = 0; y < columnSize; ++y)
+	{
+		for (int z = 0; z < depthSize; ++z)
+		{
+			closestCube = nullptr;
+			if (rowSums[y][z] != 0)
+			{
+				for (int x = 0; x < rowSize; ++x)
+				{
+					if (cubes[x][y][z] != nullptr)
+					{
+						if (closestCube == nullptr)
+						{
+							closestCube = cubes[x][y][z];
+							closestDist = (cameraPos - closestCube->getPosition()).Length();
+						}
+						else
+						{
+							if ((cameraPos - closestCube->getPosition()).Length() < closestDist)
+							{
+								closestDist = (cameraPos - closestCube->getPosition()).Length();
+								closestCube = cubes[x][y][z];
+							}
+						}
+					}
+				}
+				if (closestCube != nullptr)
+				{
+					//Setup number transform
+					gef::Matrix44 finalTransform = gef::Matrix44::kIdentity;
+					gef::Matrix44 rotMatrix1 = gef::Matrix44::kIdentity;
+					gef::Matrix44 rotMatrix2 = gef::Matrix44::kIdentity;
+					gef::Matrix44 scaleMatrix = gef::Matrix44::kIdentity;
+					gef::Matrix44 transformMatrix = gef::Matrix44::kIdentity;
+					float scaleF = 10.0f;
+					float rotF = 90.0f;
+					rotMatrix1.RotationZ(gef::DegToRad(rotF));
+					scaleMatrix.Scale(gef::Vector4(scaleF, scaleF, scaleF, 1.0f));
+
+					//Rotate number
+					if (left)
+					{
+						rotMatrix2.RotationY(gef::DegToRad(rotF));
+					}
+					else
+					{
+						rotMatrix2.RotationY(gef::DegToRad(-rotF));
+					}
+					rotMatrix1 = rotMatrix1 * rotMatrix2;
+
+					//Place on appropriate side of cubes
+					gef::Vector4 translation = closestCube->getPosition();
+					if (left)
+					{
+						translation -= gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
+					}
+					else
+					{
+						translation += gef::Vector4(cubeSideSize * 0.5f, 0.0f, 0.0f);
+					}
+					transformMatrix.SetTranslation(translation);
+					finalTransform = rotMatrix1 * scaleMatrix * transformMatrix;
+					numbers[rowSums[y][z] - 1].second->set_transform(finalTransform);
+
+					//Render appropriate number
+					renderer->DrawMesh(*numbers[rowSums[y][z] - 1].second);
+				}
+			}
+
+		}
+	}
+
+	
+	for (size_t j = 0; j < columnSums.size(); ++j)
+	{
+
+	}
+	for (size_t k = 0; k < depthSums.size(); ++k)
+	{
+
+	}
 }
 
 void PicrossLevel::setSpacing(float spacing)
