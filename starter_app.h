@@ -97,7 +97,7 @@ private:
 	float cameraXZOffset;
 	float cameraRotAmount;
 
-	//Numbers
+	//Numbers (rendered on side of cube)
 	static constexpr int numNumbers = 4;
 	std::pair<gef::Scene*, gef::MeshInstance*> numberScenes[numNumbers];
 };

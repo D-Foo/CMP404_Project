@@ -149,9 +149,13 @@ bool StarterApp::Update(float frame_time)
 			{
 				keyW = true;
 			}
-			if (keyboard->IsKeyDown(keyboard->KC_E))
+			if (keyboard->IsKeyDown(keyboard->KC_R))
 			{
 				pLevel->resetCubeColours();
+			}
+			if (keyboard->IsKeyDown(keyboard->KC_E))
+			{
+				camera_eye_.set_y(camera_eye_.y() + (50.0f * frame_time));
 			}
 			if (keyboard->IsKeyDown(keyboard->KC_ESCAPE))
 			{
@@ -186,7 +190,7 @@ bool StarterApp::Update(float frame_time)
 					}
 					//Rotate Cam Right 90
 				}
-				camera_eye_ = gef::Vector4((sin(gef::DegToRad(cameraRotAmount)) * cameraDist), cameraYOffset, (cos(gef::DegToRad(cameraRotAmount)) * cameraDist ));
+				camera_eye_ = gef::Vector4((sin(gef::DegToRad(cameraRotAmount)) * cameraDist), camera_eye_.y(), (cos(gef::DegToRad(cameraRotAmount)) * cameraDist ));
 				pLevel->updateNumbers(numNumbers, numberScenes, camera_eye_);
 			}
 		}
